@@ -56,17 +56,17 @@ video {
     border-radius: 10px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    row-gap: 8px;
-    column-gap: 15px;
+    gap: 12px;
+    justify-items: center;
+    align-items: center;
+    text-align: center;
 }
 
 .label {
-    text-align: right;
     font-weight: bold;
 }
 
 .value {
-    text-align: left;
 }
 
 /* =============================
