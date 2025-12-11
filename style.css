@@ -256,3 +256,33 @@ h1 {
         top: 0;
     }
 }
+
+/* ============================================================
+   HALL OF FAME ANIMATIONS
+   ============================================================ */
+
+/* Slide-in dari kanan */
+.hof-item {
+    animation: slideIn 0.45s ease forwards;
+    opacity: 0;
+    transform: translateX(40px);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Highlight tempat pertama */
+.hof-item.top-score {
+    border: 2px solid #8cff96;
+    background: rgba(120,255,140,0.15);
+    box-shadow: 0 0 12px rgba(80,255,120,0.55);
+    transform: scale(1.03);
+}
