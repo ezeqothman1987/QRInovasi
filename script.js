@@ -3,7 +3,7 @@
       Perlu tukar nama fail kemudian.
    ============================================================ */
 const validQRImages = [
-    "batu1.png", "batu2.png", "batu3.png", "batu4.png", "batu5.png",
+    "qr.jpeg", "batu2.png", "batu3.png", "batu4.png", "batu5.png",
     "batu6.png", "batu7.png", "batu8.png", "batu9.png", "batu10.png",
     "batu11.png", "batu12.png", "batu13.png", "batu14.png", "batu15.png"
 ];
@@ -12,7 +12,7 @@ const validQRImages = [
    2) KATEGORI BATU
    ============================================================ */
 const rockCategory = {
-    batu1: "Igneus",
+    qr: "Igneus",
     batu2: "Igneus",
     batu3: "Sedimen",
     batu4: "Sedimen",
