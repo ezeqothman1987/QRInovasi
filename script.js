@@ -1,136 +1,128 @@
 /* ============================================================
-   1) SENARAI QR SAH (nama fail tanpa .format)
+   1) QR LIST
    ============================================================ */
 const QR_PATH = "/static/qr_images/";
 
 const validQRImages = [
-    "qr", "batu2", "batu3", "batu4", "batu5",
-    "batu6", "batu7", "batu8", "batu9", "batu10",
-    "batu11", "batu12", "batu13", "batu14", "batu15"
+    "qr","batu2","batu3","batu4","batu5",
+    "batu6","batu7","batu8","batu9","batu10",
+    "batu11","batu12","batu13","batu14","batu15"
 ];
 
 /* ============================================================
-   2) KATEGORI BATU
-   ============================================================ */
-const rockCategory = {
-    qr: "Igneus",
-    batu2: "Igneus",
-    batu3: "Sedimen",
-    batu4: "Sedimen",
-    batu5: "Metamorf",
-    batu6: "Metamorf",
-    batu7: "Mineral",
-    batu8: "Igneus",
-    batu9: "Sedimen",
-    batu10: "Metamorf",
-    batu11: "Mineral",
-    batu12: "Igneus",
-    batu13: "Sedimen",
-    batu14: "Metamorf",
-    batu15: "Mineral"
-};
-
-/* ============================================================
-   3) AMBIL ELEMEN HTML
+   2) HTML ELEMENTS
    ============================================================ */
 const video = document.getElementById("video");
 const statusText = document.getElementById("cameraStatus");
+const startBtn = document.getElementById("startScanBtn");
 const timerText = document.getElementById("timer");
 const scoreBox = document.getElementById("score");
 
 /* ============================================================
-   4) PEMBOLEH UBAH GLOBAL
+   3) SOUND EFFECTS (KEKAL, TIDAK DIBUANG)
    ============================================================ */
-let stream;
+
+// const soundCorrect = new Audio("sound/correct.mp3");
+// const soundWrong = new Audio("sound/wrong.mp3");
+// const soundScan = new Audio("sound/scan.mp3");
+// const soundTick = new Audio("sound/tick.mp3");
+
+/* ============================================================
+   4) GLOBAL VARS
+   ============================================================ */
+let stream = null;
+let scanningActive = false;
 let scanning = false;
 let timer = 30;
 let timerInterval = null;
 
-/* ============================================================
-   5) AUDIO
-   ============================================================ */
-// const scanSound = new Audio("/static/sound/contoh.mp3");   // bunyi QR sah
-// const bonusSound = new Audio("/static/sound/bonus.mp3");     // bunyi tambah masa
-// const wrongSound = new Audio("/static/sound/wrong.mp3");     // bunyi salah
-
-/* ============================================================
-   6) ANTI-SPAM QR
-   ============================================================ */
 let lastQR = "";
 let lastQRTime = 0;
 const QR_COOLDOWN = 3000;
 
 /* ============================================================
-   7) AKTIFKAN KAMERA
+   FULLSCREEN
    ============================================================ */
-navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-.then(s => {
-    stream = s;
-    video.srcObject = stream;
-    video.setAttribute("playsinline", true);
-    video.play();
-    requestAnimationFrame(scanQR);
+document.getElementById("fullscreenBtn").addEventListener("click", () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
 });
 
 /* ============================================================
-   8) SCAN QR SETIAP FRAME
+   START / STOP GAME
+   ============================================================ */
+startBtn.addEventListener("click", async () => {
+    if (!scanningActive) {
+        await startCamera();
+        scanningActive = true;
+        startBtn.textContent = "■ Tamat";
+        requestAnimationFrame(scanQR);
+    } else {
+        stopCamera();
+        scanningActive = false;
+        scanning = false;
+        startBtn.textContent = "🎮 Mula Bermain";
+        clearInterval(timerInterval);
+        timerText.textContent = "-";
+        scoreBox.textContent = "0";
+    }
+});
+
+/* ============================================================
+   CAMERA FUNCTIONS
+   ============================================================ */
+async function startCamera() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" }
+        });
+
+        video.srcObject = stream;
+        video.play();
+    } catch (err) {
+        statusText.textContent = "Gagal buka kamera.";
+    }
+}
+
+function stopCamera() {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    video.srcObject = null;
+}
+
+/* ============================================================
+   SCAN QR
    ============================================================ */
 function scanQR() {
+    if (!scanningActive) return;
 
-    if (!scanning) {
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
 
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        const qr = jsQR(imageData.data, canvas.width, canvas.height);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-        if (qr) {
-            const raw = qr.data.trim().toLowerCase();
+    const qr = jsQR(imgData.data, canvas.width, canvas.height);
 
-            /* -------------------------------------
-               ANTI-SPAM COOLDOWN
-               ------------------------------------- */
-            const now = Date.now();
-            if (raw === lastQR && (now - lastQRTime) < QR_COOLDOWN) {
-                requestAnimationFrame(scanQR);
-                return;
-            }
-            lastQR = raw;
-            lastQRTime = now;
+    if (!scanning && qr) {
+        const raw = qr.data.trim().toLowerCase();
 
-            /* -------------------------------------
-               SEMAK QR SAH
-               ------------------------------------- */
-            if (validQRImages.includes(raw)) {
+        const now = Date.now();
+        if (raw === lastQR && now - lastQRTime < QR_COOLDOWN) {
+            requestAnimationFrame(scanQR);
+            return;
+        }
 
-                const fullQRPath = QR_PATH + raw + ".png";
-                console.log("QR image path:", fullQRPath);
+        lastQR = raw;
+        lastQRTime = now;
 
-                scanning = true;
-                statusText.innerHTML = `QR dikesan: <b>${raw}</b> (sah)`;
+        if (validQRImages.includes(raw)) {
+            scanning = true;
+            startTimer(raw);
 
-                // Bunyi scan berjaya
-                // scanSound.currentTime = 0;
-                // scanSound.play();
-
-                timer += 5;
-                if (timer > 30) timer = 30;
-
-                // bonusSound.play();
-
-                startTimer(raw);
-
-            } else {
-                statusText.textContent = "QR dikesan tetapi TIDAK sah.";
-
-                // Bunyi salah
-                // wrongSound.currentTime = 0;
-                // wrongSound.play();
-            }
+            // soundScan.play();
         }
     }
 
@@ -138,9 +130,9 @@ function scanQR() {
 }
 
 /* ============================================================
-   9) MULA TIMER
+   TIMER
    ============================================================ */
-function startTimer(rockName) {
+function startTimer(rock) {
     timer = 30;
     timerText.textContent = timer;
 
@@ -150,35 +142,114 @@ function startTimer(rockName) {
 
         if (timer <= 0) {
             clearInterval(timerInterval);
-            calculateScore(rockName);
+            calculateScore(rock);
         }
-
     }, 1000);
 }
 
 /* ============================================================
-   10) KIRA SKOR & RESET
+   SCORING
    ============================================================ */
-function calculateScore(rockName) {
-
-    clearInterval(timerInterval);
+function calculateScore(rock) {
 
     const used = 30 - timer;
     const score = Math.max(1, Math.min(10, 10 - Math.floor(used / 3)));
 
     scoreBox.textContent = score;
 
+    // if (score >= 6) soundCorrect.play();
+    // else soundWrong.play();
+
     setTimeout(() => {
-
-        statusText.textContent = "Sedia untuk scan batu seterusnya.";
-        timerText.textContent = "-";
-        scoreBox.textContent = "0";
-
         scanning = false;
-        timer = 30;
-
+        scoreBox.textContent = "0";
+        timerText.textContent = "-";
         lastQR = "";
-        lastQRTime = 0;
+    }, 2500);
+}
 
-    }, 3000);
+/* ============================================================
+   ============================================================
+         ARDUINO INTEGRATION — AUTO DETECT + CONNECT
+   ============================================================
+   ============================================================ */
+
+const arduinoCheckbox = document.getElementById("arduinoMode");
+const connectBtn = document.getElementById("connectArduinoBtn");
+
+let serialPort = null;
+let serialWriter = null;
+let serialReader = null;
+
+// mula-mula disable
+arduinoCheckbox.disabled = true;
+
+/* ============================================================
+   AUTO DETECT PLUG-IN
+   ============================================================ */
+navigator.serial.addEventListener("connect", (e) => {
+    arduinoCheckbox.disabled = false;
+    connectBtn.textContent = "Arduino Available (Click to Connect)";
+});
+
+/* ============================================================
+   AUTO DETECT CABUT
+   ============================================================ */
+navigator.serial.addEventListener("disconnect", () => {
+    arduinoCheckbox.checked = false;
+    arduinoCheckbox.disabled = true;
+    connectBtn.textContent = "Connect Arduino";
+    serialPort = null;
+});
+
+/* ============================================================
+   CONNECT MANUALLY
+   ============================================================ */
+connectBtn.addEventListener("click", async () => {
+    try {
+        serialPort = await navigator.serial.requestPort();
+        await serialPort.open({ baudRate: 9600 });
+
+        connectBtn.textContent = "Arduino Connected ✓";
+        connectBtn.style.background = "#28a745";
+
+        const txtDecoder = new TextDecoderStream();
+        serialPort.readable.pipeTo(txtDecoder.writable);
+        serialReader = txtDecoder.readable.getReader();
+
+        const txtEncoder = new TextEncoderStream();
+        txtEncoder.readable.pipeTo(serialPort.writable);
+        serialWriter = txtEncoder.writable.getWriter();
+
+        listenToArduino();
+
+    } catch (err) {
+        connectBtn.textContent = "Connect Arduino (Fail)";
+    }
+});
+
+/* ============================================================
+   RECEIVE SERIAL DATA
+   ============================================================ */
+async function listenToArduino() {
+    while (true) {
+        try {
+            const { value, done } = await serialReader.read();
+            if (done) break;
+            if (!value) continue;
+
+            console.log("Arduino:", value.trim());
+
+        } catch (err) {
+            break;
+        }
+    }
+}
+
+/* ============================================================
+   SEND TO ARDUINO
+   ============================================================ */
+function sendToArduino(msg) {
+    if (!arduinoCheckbox.checked || !serialWriter) return;
+    serialWriter.write(msg + "\n");
 }
