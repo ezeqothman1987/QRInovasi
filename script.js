@@ -443,12 +443,28 @@ function saveHallOfFame() {
 function loadHallOfFame() {
     const list = document.getElementById("hofList");
     if (!list) return;
+
     list.innerHTML = "";
-    const arr = JSON.parse(localStorage.getItem("hof") || "[]");
+
+    let arr = JSON.parse(localStorage.getItem("hof") || "[]");
+
+    // sort dari score tertinggi → rendah
     arr.sort((a, b) => b.score - a.score);
-    arr.forEach(r => {
+
+    arr.forEach((r, index) => {
         const li = document.createElement("li");
-        li.textContent = `${r.name} — ${r.score}`;
+
+        // Tambah ranking + content
+        li.innerHTML = `<b>${index + 1}.</b> ${r.name} — ${r.score}`;
+
+        // Tambah class untuk animasi slide-in
+        li.classList.add("hof-item");
+
+        // Highlight top score (ranking #1)
+        if (index === 0) {
+            li.classList.add("top-score");
+        }
+
         list.appendChild(li);
     });
 }
