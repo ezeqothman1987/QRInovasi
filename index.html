@@ -7,25 +7,44 @@
 </head>
 <body>
 
+<!-- ===========================================================
+     FULLSCREEN BUTTON
+     =========================================================== -->
 <div id="fullscreenBtn">⛶ Fullscreen</div>
 
 <div class="app-container">
 
     <h1 class="title">🪨 GEO-QUIZ QR KUMPULAN 1</h1>
     
+    <!-- ===========================================================
+         ARDUINO MODE + BUTTON MULA SCAN
+         =========================================================== -->
     <div class="arduino-toggle">
         <label><input type="checkbox" id="arduinoMode"> Arduino Mode</label>
         <button id="connectArduinoBtn">Connect Arduino</button>
+
+        <!-- Button untuk mengaktifkan kamera -->
         <button id="startScanBtn" class="start-btn">🎮 Mula Bermain</button>
     </div>
 
+    <!-- ===========================================================
+         VIDEO KAMERA + STATUS QR
+         =========================================================== -->
     <div class="video-box">
         <video id="video" autoplay playsinline></video>
+
+        <!-- Canvas digunakan oleh jsQR untuk baca frame kamera -->
         <canvas id="qr-canvas" hidden></canvas>
+
+        <!-- Status akan menunjukkan QR sah / tidak sah -->
         <div id="cameraStatus" class="camera-status"></div>
     </div>
 
+    <!-- ===========================================================
+         PANEL MAKLUMAT (Nama Batu, Masa, Markah)
+         =========================================================== -->
     <div class="info-panel">
+
         <div class="label">Nama Batuan:</div>
         <div id="rockName" class="value">–</div>
 
@@ -34,16 +53,26 @@
 
         <div class="label">Markah:</div>
         <div id="score" class="value">0</div>
+
     </div>
 
+    <!-- ===========================================================
+         BUTANG PILIHAN KATEGORI (ditambah kategori MINERAL)
+         =========================================================== -->
     <div class="button-panel">
         <button class="cat-btn ig" onclick="chooseCategory('igneous')">Igneus</button>
         <button class="cat-btn sd" onclick="chooseCategory('sedimentary')">Sedimen</button>
         <button class="cat-btn mt" onclick="chooseCategory('metamorphic')">Metamorph</button>
+
+        <!-- Tambahan kategori ke-4 seperti yang diminta -->
+        <button class="cat-btn mn" onclick="chooseCategory('mineral')">Mineral</button>
     </div>
 
 </div>
 
+<!-- ===========================================================
+     MODAL TAMAT PERMAINAN
+     =========================================================== -->
 <div id="endModal" class="modal">
     <div class="modal-content">
         <h2>Tamat Permainan!</h2>
@@ -55,24 +84,19 @@
     </div>
 </div>
 
+<!-- ===========================================================
+     SIDEBAR: HALL OF FAME
+     =========================================================== -->
 <div class="sidebar">
     <div class="hof-box">
         <h2>🏆 Hall of Fame</h2>
         <ul id="hofList"></ul>
     </div>
-    
-    <div class="qr-gallery-box">
-        <h2>📁 QR Images</h2>
-        <div class="upload-section">
-            <input type="file" id="qrUpload" accept="image/*" multiple>
-            <button id="uploadBtn">Upload</button>
-        </div>
-        <div id="qrGallery" class="qr-gallery"></div>
-        <p class="hint">Klik gambar untuk simulate scan</p>
-    </div>
-</div>
 
+<!-- jsQR for QR scanning -->
 <script src="https://unpkg.com/jsqr"></script>
+
+<!-- Script utama -->
 <script src="script.js"></script>
 
 </body>
