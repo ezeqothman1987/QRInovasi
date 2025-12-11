@@ -1,6 +1,5 @@
 /* ============================================================
-   1) SENARAI QR SAH (menggantikan membaca folder /static/qr_images)
-      Perlu tukar nama fail kemudian.
+   1) SENARAI QR SAH
    ============================================================ */
 const validQRImages = [
     "qr.jpeg", "batu2.png", "batu3.png", "batu4.png", "batu5.png",
@@ -37,13 +36,30 @@ const statusText = document.getElementById("status");
 const timerText = document.getElementById("timerDisplay");
 const scoreBox = document.getElementById("scoreBox");
 
+/* ============================================================
+   4) PEMBOLEH UBAH GLOBAL
+   ============================================================ */
 let stream;
 let scanning = false;
 let timer = 30;
 let timerInterval = null;
 
 /* ============================================================
-   4) AKTIFKAN KAMERA
+   5) AUDIO 
+   ============================================================ */
+//const scanSound = new Audio("/static/sound/contoh.mp3");        // bunyi QR sah
+//const bonusSound = new Audio("/static/sound/bonus.mp3");        // bunyi tambah masa
+//const wrongSound = new Audio("/static/sound/wrong.mp3");        // bunyi salah
+
+/* ============================================================
+   6) ANTI-SPAM QR
+   ============================================================ */
+let lastQR = "";
+let lastQRTime = 0;
+const QR_COOLDOWN = 3000; // 3 saat
+
+/* ============================================================
+   7) AKTIFKAN KAMERA
    ============================================================ */
 navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
 .then(s => {
@@ -55,7 +71,7 @@ navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
 });
 
 /* ============================================================
-   5) FUNGSI SCAN QR SETIAP FRAME
+   8) SCAN QR SETIAP FRAME
    ============================================================ */
 function scanQR() {
     if (!scanning) {
@@ -73,13 +89,47 @@ function scanQR() {
             const raw = qr.data.trim().toLowerCase();
             const expectedFilename = raw + ".png";
 
-            /* VALIDASI QR: mesti match salah satu fail batu */
+            /* ======================================================
+               ANTI-SPAM: elak QR sama dibaca 2x dalam 3s
+               ====================================================== */
+            const now = Date.now();
+            if (raw === lastQR && (now - lastQRTime) < QR_COOLDOWN) {
+                requestAnimationFrame(scanQR);
+                return;
+            }
+            lastQR = raw;
+            lastQRTime = now;
+
+            /* ======================================================
+               QR SAH
+               ====================================================== */
             if (validQRImages.includes(expectedFilename)) {
+
                 scanning = true;
                 statusText.innerHTML = `QR dikesan: <b>${raw}</b> (sah)`;
+
+                //Bunyi scan berjaya
+                //scanSound.currentTime = 0;
+                //scanSound.play();
+
+                /* -----------------------------------------------
+                   BONUS MASA (ditambah) → anda boleh ubah / buang
+                   ----------------------------------------------- */
+                timer += 5;
+                if (timer > 30) timer = 30;
+                //bonusSound.play();
+
                 startTimer(raw);
+
             } else {
+                /* ======================================================
+                   QR TIDAK SAH
+                   ====================================================== */
                 statusText.textContent = "QR dikesan tetapi TIDAK sah.";
+
+                //Bunyi salah
+                //wrongSound.currentTime = 0;
+                //wrongSound.play();
             }
         }
     }
@@ -88,7 +138,7 @@ function scanQR() {
 }
 
 /* ============================================================
-   6) TIMER 30 SAAT (mula hanya bila QR sah)
+   9) MULA TIMER
    ============================================================ */
 function startTimer(rockName) {
     timer = 30;
@@ -103,22 +153,31 @@ function startTimer(rockName) {
             calculateScore(rockName);
         }
     }, 1000);
-
-    let correctCategory = rockCategory[rockName];
-    console.log("Kategori untuk", rockName, "ialah", correctCategory);
-
-    // Di sini anda boleh paparkan soalan / UI jika perlu
 }
 
 /* ============================================================
-   7) KIRA SKOR (10 → 1 ikut kepantasan)
+   10) KIRA SKOR + AUTO RESET
    ============================================================ */
 function calculateScore(rockName) {
+
     clearInterval(timerInterval);
 
     const used = 30 - timer;
-
     const score = Math.max(1, Math.min(10, 10 - Math.floor(used / 3)));
 
     scoreBox.innerHTML = `Markah anda: <b>${score}</b>`;
+
+    /* AUTO RESET 3s */
+    setTimeout(() => {
+        statusText.textContent = "Sedia untuk scan batu seterusnya.";
+        timerText.textContent = "Timer: -";
+        scoreBox.innerHTML = "";
+
+        scanning = false;
+        timer = 30;
+
+        lastQR = "";        // reset anti-spam
+        lastQRTime = 0;
+
+    }, 3000);
 }
