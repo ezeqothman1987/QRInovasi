@@ -1,397 +1,124 @@
-/* =============================================================
-   QR GEO GAME — Full Version
-   With UI, Fullscreen, Timer, Arduino Mode, Hall of Fame, QR Gallery
-   ============================================================= */
+/* ============================================================
+   1) SENARAI QR SAH (menggantikan membaca folder /static/qr_images)
+      Perlu tukar nama fail kemudian.
+   ============================================================ */
+const validQRImages = [
+    "batu1.png", "batu2.png", "batu3.png", "batu4.png", "batu5.png",
+    "batu6.png", "batu7.png", "batu8.png", "batu9.png", "batu10.png",
+    "batu11.png", "batu12.png", "batu13.png", "batu14.png", "batu15.png"
+];
 
-const CATEGORIES = {
-    igneous: ["granite", "basalt", "andesite", "rhyolite"],
-    sedimentary: ["limestone", "sandstone", "shale", "conglomerate"],
-    metamorphic: ["gneiss", "schist", "quartzite", "phyllite"]
+/* ============================================================
+   2) KATEGORI BATU
+   ============================================================ */
+const rockCategory = {
+    batu1: "Igneus",
+    batu2: "Igneus",
+    batu3: "Sedimen",
+    batu4: "Sedimen",
+    batu5: "Metamorf",
+    batu6: "Metamorf",
+    batu7: "Mineral",
+    batu8: "Igneus",
+    batu9: "Sedimen",
+    batu10: "Metamorf",
+    batu11: "Mineral",
+    batu12: "Igneus",
+    batu13: "Sedimen",
+    batu14: "Metamorf",
+    batu15: "Mineral"
 };
 
-let gameActive = false;
-let score = 0;
-let timer = null;
-let timeLeft = 10;
-let currentRockName = "";
-let currentCategory = "";
+/* ============================================================
+   3) AMBIL ELEMEN HTML
+   ============================================================ */
+const video = document.getElementById("video");
+const statusText = document.getElementById("status");
+const timerText = document.getElementById("timerDisplay");
+const scoreBox = document.getElementById("scoreBox");
 
-let arduinoMode = false;
-let arduinoPort = null;
-let arduinoReader = null;
-
-let video = null;
-let canvasElement = null;
-let canvas = null;
+let stream;
 let scanning = false;
-let cameraStream = null;
+let timer = 30;
+let timerInterval = null;
 
-
-document.addEventListener("DOMContentLoaded", () => {
-    video = document.getElementById("video");
-    canvasElement = document.getElementById("qr-canvas");
-    canvas = canvasElement.getContext("2d");
-    
-    loadHallOfFame();
-    loadQRGallery();
-    
-    document.getElementById("fullscreenBtn").onclick = () => {
-        document.documentElement.requestFullscreen();
-    };
-    
-    document.getElementById("connectArduinoBtn").onclick = connectArduino;
-    
-    document.getElementById("arduinoMode").onchange = (e) => {
-        arduinoMode = e.target.checked;
-    };
-    
-    document.getElementById("startScanBtn").onclick = startCamera;
-    
-    document.getElementById("uploadBtn").onclick = uploadQRImages;
+/* ============================================================
+   4) AKTIFKAN KAMERA
+   ============================================================ */
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+.then(s => {
+    stream = s;
+    video.srcObject = stream;
+    video.setAttribute("playsinline", true);
+    video.play();
+    requestAnimationFrame(scanQR);
 });
 
-
-function loadHallOfFame() {
-    const list = JSON.parse(localStorage.getItem("hallOfFame") || "[]");
-    const hofList = document.getElementById("hofList");
-    hofList.innerHTML = list
-        .map(p => `<li>${p.name} — ${p.score}</li>`)
-        .join("");
-}
-
-
-function saveHallOfFame() {
-    const nameInput = document.getElementById("playerName");
-    const name = nameInput.value.trim();
-    if (name.length === 0) return;
-    
-    const list = JSON.parse(localStorage.getItem("hallOfFame") || "[]");
-    list.push({ name, score });
-    list.sort((a, b) => b.score - a.score);
-    localStorage.setItem("hallOfFame", JSON.stringify(list.slice(0, 10)));
-    loadHallOfFame();
-    
-    document.getElementById("endModal").style.display = "none";
-    resetGame();
-}
-
-
-async function loadQRGallery() {
-    try {
-        const response = await fetch('/qr-images');
-        const images = await response.json();
-        
-        const gallery = document.getElementById("qrGallery");
-        gallery.innerHTML = "";
-        
-        if (images.length === 0) {
-            gallery.innerHTML = "<p class='no-images'>Tiada gambar. Upload QR codes.</p>";
-            return;
-        }
-        
-        images.forEach(filename => {
-            const div = document.createElement("div");
-            div.className = "qr-item";
-            
-            const img = document.createElement("img");
-            img.src = `/static/qr_images/${filename}`;
-            img.alt = filename;
-            img.onclick = () => simulateScan(filename);
-            
-            const deleteBtn = document.createElement("button");
-            deleteBtn.className = "delete-btn";
-            deleteBtn.textContent = "×";
-            deleteBtn.onclick = (e) => {
-                e.stopPropagation();
-                deleteQRImage(filename);
-            };
-            
-            div.appendChild(img);
-            div.appendChild(deleteBtn);
-            gallery.appendChild(div);
-        });
-    } catch (err) {
-        console.error("Failed to load QR gallery:", err);
-    }
-}
-
-
-async function uploadQRImages() {
-    const input = document.getElementById("qrUpload");
-    const files = input.files;
-    
-    if (files.length === 0) {
-        alert("Sila pilih fail untuk upload");
-        return;
-    }
-    
-    for (const file of files) {
-        const formData = new FormData();
-        formData.append("file", file);
-        
-        try {
-            const response = await fetch("/upload", {
-                method: "POST",
-                body: formData
-            });
-            
-            const result = await response.json();
-            if (!result.success) {
-                alert("Gagal upload: " + (result.error || "Unknown error"));
-            }
-        } catch (err) {
-            alert("Error uploading: " + err.message);
-        }
-    }
-    
-    input.value = "";
-    loadQRGallery();
-}
-
-
-async function deleteQRImage(filename) {
-    if (!confirm(`Padam ${filename}?`)) return;
-    
-    try {
-        await fetch(`/delete-image/${filename}`, { method: "DELETE" });
-        loadQRGallery();
-    } catch (err) {
-        alert("Gagal padam: " + err.message);
-    }
-}
-
-
-function simulateScan(filename) {
-    const rockName = filename.replace(/\.[^/.]+$/, "").toLowerCase();
-    onQRDetected(rockName);
-}
-
-
-function startCamera() {
-    const statusEl = document.getElementById("cameraStatus");
-    const startBtn = document.getElementById("startScanBtn");
-    
-    statusEl.textContent = "Meminta akses kamera...";
-    
-    navigator.mediaDevices.getUserMedia({ 
-        video: { 
-            facingMode: "environment",
-            width: { ideal: 640 },
-            height: { ideal: 480 }
-        } 
-    })
-    .then(stream => {
-        cameraStream = stream;
-        video.srcObject = stream;
-        video.play();
-        
-        scanning = true;
-        gameActive = true;
-        startBtn.style.display = "none";
-        statusEl.textContent = "Kamera aktif - scan QR code";
-        
-        requestAnimationFrame(scanQR);
-        startTimer();
-    })
-    .catch(err => {
-        console.error("Camera error:", err);
-        statusEl.textContent = "Kamera gagal: " + err.message;
-        statusEl.style.color = "#e74c3c";
-    });
-}
-
-
-function stopCamera() {
-    scanning = false;
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
-    }
-    video.srcObject = null;
-}
-
-
+/* ============================================================
+   5) FUNGSI SCAN QR SETIAP FRAME
+   ============================================================ */
 function scanQR() {
-    if (!scanning) return;
-    
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvasElement.height = video.videoHeight;
-        canvasElement.width = video.videoWidth;
-        canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-        
-        const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-            inversionAttempts: "dontInvert",
-        });
-        
-        if (code && code.data) {
-            onQRDetected(code.data);
+    if (!scanning) {
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const qr = jsQR(imageData.data, canvas.width, canvas.height);
+
+        if (qr) {
+            const raw = qr.data.trim().toLowerCase();
+            const expectedFilename = raw + ".png";
+
+            /* VALIDASI QR: mesti match salah satu fail batu */
+            if (validQRImages.includes(expectedFilename)) {
+                scanning = true;
+                statusText.innerHTML = `QR dikesan: <b>${raw}</b> (sah)`;
+                startTimer(raw);
+            } else {
+                statusText.textContent = "QR dikesan tetapi TIDAK sah.";
+            }
         }
     }
-    
+
     requestAnimationFrame(scanQR);
 }
 
+/* ============================================================
+   6) TIMER 30 SAAT (mula hanya bila QR sah)
+   ============================================================ */
+function startTimer(rockName) {
+    timer = 30;
+    timerText.textContent = "Timer: 30";
 
-function startTimer() {
-    timeLeft = 10;
-    updateTimerUI();
-    
-    if (timer) clearInterval(timer);
-    timer = setInterval(countdown, 1000);
-}
+    timerInterval = setInterval(() => {
+        timer--;
+        timerText.textContent = "Timer: " + timer;
 
-
-function countdown() {
-    timeLeft--;
-    updateTimerUI();
-    
-    if (timeLeft <= 0) {
-        wrongAnswer();
-    }
-}
-
-
-function updateTimerUI() {
-    document.getElementById("timer").textContent = timeLeft;
-}
-
-
-function onQRDetected(text) {
-    currentRockName = text.toLowerCase().trim();
-    
-    currentCategory = "";
-    for (const cat in CATEGORIES) {
-        if (CATEGORIES[cat].includes(currentRockName)) {
-            currentCategory = cat;
-            break;
+        if (timer <= 0) {
+            clearInterval(timerInterval);
+            calculateScore(rockName);
         }
-    }
-    
-    document.getElementById("rockName").textContent = currentRockName.toUpperCase();
-    
-    if (currentCategory) {
-        startTimer();
-    } else {
-        document.getElementById("cameraStatus").textContent = 
-            `"${currentRockName}" tidak dikenali. Cuba lagi.`;
-    }
-}
-
-
-function chooseCategory(selected) {
-    if (!gameActive) {
-        alert("Sila tekan 'Mula Scan QR' dahulu!");
-        return;
-    }
-    if (!currentRockName || currentRockName === "–") {
-        alert("Sila scan QR batu dahulu!");
-        return;
-    }
-    
-    if (arduinoMode) return;
-    
-    checkAnswer(selected);
-}
-
-
-function checkAnswer(selected) {
-    if (!gameActive) return;
-    
-    if (selected === currentCategory) {
-        correctAnswer();
-    } else {
-        wrongAnswer();
-    }
-}
-
-
-function correctAnswer() {
-    score++;
-    document.getElementById("score").textContent = score;
-    document.getElementById("cameraStatus").textContent = "✓ Betul! Scan QR seterusnya...";
-    document.getElementById("cameraStatus").style.color = "#2ecc71";
-    
-    clearInterval(timer);
-    
-    currentRockName = "";
-    currentCategory = "";
-    document.getElementById("rockName").textContent = "Scan QR seterusnya...";
-    
-    setTimeout(() => {
-        document.getElementById("cameraStatus").style.color = "#aaa";
-        startTimer();
     }, 1000);
+
+    let correctCategory = rockCategory[rockName];
+    console.log("Kategori untuk", rockName, "ialah", correctCategory);
+
+    // Di sini anda boleh paparkan soalan / UI jika perlu
 }
 
+/* ============================================================
+   7) KIRA SKOR (10 → 1 ikut kepantasan)
+   ============================================================ */
+function calculateScore(rockName) {
+    clearInterval(timerInterval);
 
-function wrongAnswer() {
-    document.getElementById("cameraStatus").textContent = "✗ Salah!";
-    document.getElementById("cameraStatus").style.color = "#e74c3c";
-    clearInterval(timer);
-    endGame();
-}
+    const used = 30 - timer;
 
+    const score = Math.max(1, Math.min(10, 10 - Math.floor(used / 3)));
 
-function endGame() {
-    gameActive = false;
-    stopCamera();
-    
-    document.getElementById("finalScore").textContent = score;
-    document.getElementById("endModal").style.display = "block";
-}
-
-
-function resetGame() {
-    score = 0;
-    document.getElementById("score").textContent = "0";
-    document.getElementById("rockName").textContent = "–";
-    document.getElementById("timer").textContent = "–";
-    document.getElementById("playerName").value = "";
-    document.getElementById("cameraStatus").textContent = "";
-    document.getElementById("cameraStatus").style.color = "#aaa";
-    document.getElementById("startScanBtn").style.display = "block";
-    
-    currentRockName = "";
-    currentCategory = "";
-}
-
-
-async function connectArduino() {
-    try {
-        arduinoPort = await navigator.serial.requestPort();
-        await arduinoPort.open({ baudRate: 9600 });
-        
-        const decoder = new TextDecoderStream();
-        arduinoPort.readable.pipeTo(decoder.writable);
-        arduinoReader = decoder.readable.getReader();
-        
-        document.getElementById("arduinoMode").checked = true;
-        arduinoMode = true;
-        
-        listenArduino();
-        alert("Arduino berjaya disambung!");
-    } catch (e) {
-        alert("Tidak dapat sambung Arduino: " + e.message);
-    }
-}
-
-
-async function listenArduino() {
-    while (arduinoMode && arduinoReader) {
-        try {
-            const { value, done } = await arduinoReader.read();
-            if (done) break;
-            
-            if (!value) continue;
-            
-            const input = value.trim();
-            if (input === "1") checkAnswer("igneous");
-            if (input === "2") checkAnswer("sedimentary");
-            if (input === "3") checkAnswer("metamorphic");
-        } catch (e) {
-            console.error("Arduino read error:", e);
-            break;
-        }
-    }
+    scoreBox.innerHTML = `Markah anda: <b>${score}</b>`;
 }
