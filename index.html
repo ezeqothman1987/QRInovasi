@@ -1,80 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <title>GeoQuiz QR – Kiosk Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEO-QUIZ QR KUMPULAN 1</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- FULLSCREEN BUTTON -->
-<div id="fullscreenBtn">⛶ Fullscreen</div>
+    <h1>GEO-QUIZ QR</h1>
 
-<div class="app-container">
-
-    <h1 class="title">🪨 GEO-QUIZ QR KUMPULAN 1</h1>
-
-    <!-- ARDUINO SECTION -->
-    <div class="arduino-toggle">
-        <label><input type="checkbox" id="arduinoMode"> Arduino Mode</label>
-        <button id="connectArduinoBtn">Connect Arduino</button>
-        <button id="startScanBtn" class="start-btn">🎮 Mula Bermain</button>
+    <div class="arduino-section">
+        <label>
+            <input type="checkbox" id="arduinoToggle">
+            Arduino Mode
+        </label>
+        <button id="connectBtn">Connect Arduino</button>
     </div>
 
-    <!-- CAMERA -->
-    <div class="video-box">
-        <video id="video" autoplay playsinline></video>
-        <canvas id="qr-canvas" hidden></canvas>
-        <div id="cameraStatus" class="camera-status"></div>
+    <button id="startBtn">Mula Bermain</button>
+
+    <div id="gameArea" class="hidden">
+        <p><strong>Nama Batuan:</strong> <span id="rockName">-</span></p>
+        <p><strong>Masa:</strong> <span id="timeLeft">-</span></p>
+        <p><strong>Markah:</strong> <span id="score">0</span></p>
+
+        <div id="answerButtons">
+            <button class="answerBtn">Igneus</button>
+            <button class="answerBtn">Sedimen</button>
+            <button class="answerBtn">Metamorph</button>
+            <button class="answerBtn">Mineral</button>
+        </div>
     </div>
 
-    <!-- INFO -->
-    <div class="info-panel">
-        <div class="label">Nama Batuan:</div>
-        <div id="rockName" class="value">–</div>
-
-        <div class="label">Masa:</div>
-        <div id="timer" class="value">–</div>
-
-        <div class="label">Markah:</div>
-        <div id="score" class="value">0</div>
-    </div>
-
-    <!-- CATEGORY BUTTONS -->
-    <div class="button-panel">
-        <button class="cat-btn ig" onclick="chooseCategory('igneous')">Igneus</button>
-        <button class="cat-btn sd" onclick="chooseCategory('sedimentary')">Sedimen</button>
-        <button class="cat-btn mt" onclick="chooseCategory('metamorphic')">Metamorph</button>
-        <button class="cat-btn mn" onclick="chooseCategory('mineral')">Mineral</button>
-    </div>
-
-</div>
-
-<!-- END MODAL -->
-<div id="endModal" class="modal">
-    <div class="modal-content">
+    <div id="endScreen" class="hidden">
         <h2>Tamat Permainan!</h2>
-        <p>Total Markah: <span id="finalScore"></span></p>
-
-        <input id="playerName" placeholder="Isikan Nama Anda">
-        <button onclick="saveHallOfFame()">Simpan ke Hall of Fame</button>
-        <button onclick="resetGame()">Main Lagi</button>
+        <p>Markah Akhir: <span id="finalScore"></span></p>
+        <input type="text" id="playerName" placeholder="Nama Anda">
+        <button id="saveScoreBtn">Simpan Rekod</button>
     </div>
-</div>
 
-<!-- HALL OF FAME -->
-<div class="sidebar">
-    <div class="hof-box">
-        <h2>🏆 Hall of Fame</h2>
-        <ul id="hofList"></ul>
-    </div>
-</div>
+    <h2>Hall of Fame</h2>
+    <ul id="hallOfFame"></ul>
 
-<!-- jsQR Library -->
-<script src="https://unpkg.com/jsqr"></script>
-
-<!-- MAIN JS -->
-<script src="script.js"></script>
-
+    <script src="script.js"></script>
 </body>
 </html>
