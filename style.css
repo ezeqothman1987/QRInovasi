@@ -1,172 +1,129 @@
-/* =============================
-   GLOBAL STYLING
-============================= */
+/* ============================================================
+   GLOBAL STYLE
+   ============================================================ */
 body {
     margin: 0;
+    padding: 0;
     font-family: Arial, sans-serif;
-    background: #eef2f3;
-    color: #222;
-}
-
-.app-container {
-    max-width: 900px;
-    margin: auto;
-    padding: 15px;
+    background: #f2f4f7;
     text-align: center;
 }
 
-.title {
-    margin-bottom: 15px;
+/* ============================================================
+   TITLE
+   ============================================================ */
+h1 {
     font-size: 26px;
-    font-weight: bold;
-}
-
-/* =============================
-   VIDEO BOX
-============================= */
-.video-box {
-    width: 100%;
-    max-width: 700px;
-    margin: auto;
-    background: #000;
-    border-radius: 10px;
-    overflow: hidden;
-    position: relative;
-}
-
-video {
-    width: 100%;
-    display: block;
-}
-
-.camera-status {
-    margin-top: 10px;
-    font-size: 16px;
+    margin-top: 20px;
     color: #333;
 }
 
-/* =============================
-   INFO PANEL
-============================= */
+/* ============================================================
+   CAMERA BOX
+   ============================================================ */
+.video-box {
+    margin: 20px auto 0;
+    width: 90%;
+    max-width: 480px;
+    background: #ffffff;
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
 
-.info-panel {
-    margin-top: 20px;
-    background: #fff;
-    padding: 15px;
+#video {
+    width: 100%;
     border-radius: 10px;
+    background: #000;
+}
+
+/* ============================================================
+   INFO PANEL
+   ============================================================ */
+.info-panel {
+    margin: 18px auto 0;
+    width: 90%;
+    max-width: 480px;
+    background: #fff;
+    padding: 18px;
+    border-radius: 12px;
+
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 16px;
+
     justify-items: center;
     align-items: center;
     text-align: center;
+
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
 }
 
 .label {
+    text-align: right;
     font-weight: bold;
+    color: #444;
 }
 
 .value {
+    text-align: left;
+    font-weight: bold;
+    color: #0066cc;
 }
 
-/* =============================
-   BUTTON PANEL
-============================= */
+/* ============================================================
+   BUTTON PANEL (KATEGORI)
+   ============================================================ */
 .button-panel {
-    margin-top: 20px;
+    margin: 22px auto 0;
+    width: 90%;
+    max-width: 480px;
+
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
 }
 
 .cat-btn {
-    padding: 10px 20px;
-    margin: 5px;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
+    padding: 12px;
+    font-size: 14px;
+    background: #ffffff;
+    border: 2px solid #d9d9d9;
+    border-radius: 10px;
     cursor: pointer;
-    color: #fff;
-}
+    font-weight: bold;
 
-.ig { background: #d9534f; }
-.sd { background: #f0ad4e; }
-.mt { background: #5bc0de; }
-.mn { background: #5cb85c; }
-
-/* =============================
-   ARDUINO & START BUTTON AREA
-============================= */
-.arduino-toggle {
-    margin-bottom: 20px;
-}
-
-.start-btn {
-    padding: 8px 18px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    background: #0275d8;
-    color: white;
-}
-
-/* =============================
-   MODAL
-============================= */
-.modal {
-    position: fixed;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6);
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 6px;
+
+    transition: 0.2s ease;
 }
 
-.modal-content {
-    background: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    width: 90%;
-    max-width: 300px;
-    text-align: center;
+.cat-btn:hover {
+    background: #e9eef7;
+    border-color: #b7c6e3;
 }
 
-/* =============================
-   SIDEBAR HALL OF FAME
-============================= */
-.sidebar {
-    position: fixed;
-    right: 0;
-    top: 0;
-    width: 220px;
-    height: 100%;
-    background: #f7f7f7;
-    padding: 10px;
-    overflow-y: auto;
-    border-left: 1px solid #ccc;
+.cat-btn:active {
+    background: #cdd9ef;
 }
 
-.hof-box {
-    padding: 10px;
-}
+/* ============================================================
+   RESPONSIVE DESIGN
+   ============================================================ */
+@media (max-width: 600px) {
+    .info-panel {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
 
-.hof-box ul {
-    padding-left: 0;
-    list-style: none;
-}
+    .button-panel {
+        grid-template-columns: repeat(2, 1fr);
+    }
 
-.hof-box li {
-    background: white;
-    padding: 6px 10px;
-    margin-bottom: 5px;
-    border-radius: 5px;
-}
-
-/* =============================
-   FULLSCREEN BUTTON
-============================= */
-#fullscreenBtn {
-    background: #222;
-    color: #fff;
-    padding: 6px 10px;
-    border-radius: 6px;
+    h1 {
+        font-size: 22px;
+    }
 }
