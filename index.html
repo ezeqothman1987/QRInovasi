@@ -7,48 +7,28 @@
 </head>
 <body>
 
-<!-- ===========================================================
-     BUTANG FULLSCREEN (option kiosk mode)
-=========================================================== -->
+<!-- FULLSCREEN BUTTON -->
 <div id="fullscreenBtn">⛶ Fullscreen</div>
 
 <div class="app-container">
 
     <h1 class="title">🪨 GEO-QUIZ QR KUMPULAN 1</h1>
-    
-    <!-- ===========================================================
-         ARDUINO MODE + CONNECT + START GAME
-         - Arduino Mode = hidupkan fungsi serial
-         - Connect Arduino = buka port serial
-         - Mula Bermain:
-              * klik 1 → start game + hidup kamera
-              * klik 2 → tamat game + buka modal
-    =========================================================== -->
+
+    <!-- ARDUINO SECTION -->
     <div class="arduino-toggle">
         <label><input type="checkbox" id="arduinoMode"> Arduino Mode</label>
         <button id="connectArduinoBtn">Connect Arduino</button>
         <button id="startScanBtn" class="start-btn">🎮 Mula Bermain</button>
     </div>
 
-    <!-- ===========================================================
-         VIDEO FEED CAMERA + CANVAS UNTUK SCAN QR
-=========================================================== -->
+    <!-- CAMERA -->
     <div class="video-box">
         <video id="video" autoplay playsinline></video>
-
-        <!-- Digunakan jsQR untuk membaca frame kamera -->
         <canvas id="qr-canvas" hidden></canvas>
-
-        <!-- Status kamera QR / mesej error -->
         <div id="cameraStatus" class="camera-status"></div>
     </div>
 
-    <!-- ===========================================================
-         PANEL MAKLUMAT PERMAINAN
-         - Nama batu (dari QR)
-         - Timer
-         - Markah
-=========================================================== -->
+    <!-- INFO -->
     <div class="info-panel">
         <div class="label">Nama Batuan:</div>
         <div id="rockName" class="value">–</div>
@@ -60,11 +40,7 @@
         <div id="score" class="value">0</div>
     </div>
 
-    <!-- ===========================================================
-         PILIHAN KATEGORI
-         - Igneus / Sedimen / Metamorf / Mineral
-         - Bila klik, hantar signal ke Arduino (jika hidup)
-=========================================================== -->
+    <!-- CATEGORY BUTTONS -->
     <div class="button-panel">
         <button class="cat-btn ig" onclick="chooseCategory('igneous')">Igneus</button>
         <button class="cat-btn sd" onclick="chooseCategory('sedimentary')">Sedimen</button>
@@ -74,9 +50,7 @@
 
 </div>
 
-<!-- ===========================================================
-     POPUP TAMAT
-=========================================================== -->
+<!-- END MODAL -->
 <div id="endModal" class="modal">
     <div class="modal-content">
         <h2>Tamat Permainan!</h2>
@@ -88,9 +62,7 @@
     </div>
 </div>
 
-<!-- ===========================================================
-     HALL OF FAME (LOCALSTORAGE-ilang bila padam)
-=========================================================== -->
+<!-- HALL OF FAME -->
 <div class="sidebar">
     <div class="hof-box">
         <h2>🏆 Hall of Fame</h2>
@@ -98,9 +70,10 @@
     </div>
 </div>
 
-<!-- Library jsQR -->
+<!-- jsQR Library -->
 <script src="https://unpkg.com/jsqr"></script>
-<!-- Script utama -->
+
+<!-- MAIN JS -->
 <script src="script.js"></script>
 
 </body>
