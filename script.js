@@ -1,10 +1,12 @@
 /* ============================================================
-   1) SENARAI QR SAH
+   1) SENARAI QR SAH (nama fail tanpa .format)
    ============================================================ */
+const QR_PATH = "/static/qr_images/";
+
 const validQRImages = [
-    "qr.jpeg", "batu2.png", "batu3.png", "batu4.png", "batu5.png",
-    "batu6.png", "batu7.png", "batu8.png", "batu9.png", "batu10.png",
-    "batu11.png", "batu12.png", "batu13.png", "batu14.png", "batu15.png"
+    "qr", "batu2", "batu3", "batu4", "batu5",
+    "batu6", "batu7", "batu8", "batu9", "batu10",
+    "batu11", "batu12", "batu13", "batu14", "batu15"
 ];
 
 /* ============================================================
@@ -32,9 +34,9 @@ const rockCategory = {
    3) AMBIL ELEMEN HTML
    ============================================================ */
 const video = document.getElementById("video");
-const statusText = document.getElementById("status");
-const timerText = document.getElementById("timerDisplay");
-const scoreBox = document.getElementById("scoreBox");
+const statusText = document.getElementById("cameraStatus");
+const timerText = document.getElementById("timer");
+const scoreBox = document.getElementById("score");
 
 /* ============================================================
    4) PEMBOLEH UBAH GLOBAL
@@ -45,18 +47,18 @@ let timer = 30;
 let timerInterval = null;
 
 /* ============================================================
-   5) AUDIO 
+   5) AUDIO
    ============================================================ */
-//const scanSound = new Audio("/static/sound/contoh.mp3");        // bunyi QR sah
-//const bonusSound = new Audio("/static/sound/bonus.mp3");        // bunyi tambah masa
-//const wrongSound = new Audio("/static/sound/wrong.mp3");        // bunyi salah
+// const scanSound = new Audio("/static/sound/contoh.mp3");   // bunyi QR sah
+// const bonusSound = new Audio("/static/sound/bonus.mp3");     // bunyi tambah masa
+// const wrongSound = new Audio("/static/sound/wrong.mp3");     // bunyi salah
 
 /* ============================================================
    6) ANTI-SPAM QR
    ============================================================ */
 let lastQR = "";
 let lastQRTime = 0;
-const QR_COOLDOWN = 3000; // 3 saat
+const QR_COOLDOWN = 3000;
 
 /* ============================================================
    7) AKTIFKAN KAMERA
@@ -74,6 +76,7 @@ navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
    8) SCAN QR SETIAP FRAME
    ============================================================ */
 function scanQR() {
+
     if (!scanning) {
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
@@ -87,11 +90,10 @@ function scanQR() {
 
         if (qr) {
             const raw = qr.data.trim().toLowerCase();
-            const expectedFilename = raw + ".png";
 
-            /* ======================================================
-               ANTI-SPAM: elak QR sama dibaca 2x dalam 3s
-               ====================================================== */
+            /* -------------------------------------
+               ANTI-SPAM COOLDOWN
+               ------------------------------------- */
             const now = Date.now();
             if (raw === lastQR && (now - lastQRTime) < QR_COOLDOWN) {
                 requestAnimationFrame(scanQR);
@@ -100,36 +102,34 @@ function scanQR() {
             lastQR = raw;
             lastQRTime = now;
 
-            /* ======================================================
-               QR SAH
-               ====================================================== */
-            if (validQRImages.includes(expectedFilename)) {
+            /* -------------------------------------
+               SEMAK QR SAH
+               ------------------------------------- */
+            if (validQRImages.includes(raw)) {
+
+                const fullQRPath = QR_PATH + raw + ".png";
+                console.log("QR image path:", fullQRPath);
 
                 scanning = true;
                 statusText.innerHTML = `QR dikesan: <b>${raw}</b> (sah)`;
 
-                //Bunyi scan berjaya
-                //scanSound.currentTime = 0;
-                //scanSound.play();
+                // Bunyi scan berjaya
+                // scanSound.currentTime = 0;
+                // scanSound.play();
 
-                /* -----------------------------------------------
-                   BONUS MASA (ditambah) → anda boleh ubah / buang
-                   ----------------------------------------------- */
                 timer += 5;
                 if (timer > 30) timer = 30;
-                //bonusSound.play();
+
+                // bonusSound.play();
 
                 startTimer(raw);
 
             } else {
-                /* ======================================================
-                   QR TIDAK SAH
-                   ====================================================== */
                 statusText.textContent = "QR dikesan tetapi TIDAK sah.";
 
-                //Bunyi salah
-                //wrongSound.currentTime = 0;
-                //wrongSound.play();
+                // Bunyi salah
+                // wrongSound.currentTime = 0;
+                // wrongSound.play();
             }
         }
     }
@@ -142,21 +142,22 @@ function scanQR() {
    ============================================================ */
 function startTimer(rockName) {
     timer = 30;
-    timerText.textContent = "Timer: 30";
+    timerText.textContent = timer;
 
     timerInterval = setInterval(() => {
         timer--;
-        timerText.textContent = "Timer: " + timer;
+        timerText.textContent = timer;
 
         if (timer <= 0) {
             clearInterval(timerInterval);
             calculateScore(rockName);
         }
+
     }, 1000);
 }
 
 /* ============================================================
-   10) KIRA SKOR + AUTO RESET
+   10) KIRA SKOR & RESET
    ============================================================ */
 function calculateScore(rockName) {
 
@@ -165,18 +166,18 @@ function calculateScore(rockName) {
     const used = 30 - timer;
     const score = Math.max(1, Math.min(10, 10 - Math.floor(used / 3)));
 
-    scoreBox.innerHTML = `Markah anda: <b>${score}</b>`;
+    scoreBox.textContent = score;
 
-    /* AUTO RESET 3s */
     setTimeout(() => {
+
         statusText.textContent = "Sedia untuk scan batu seterusnya.";
-        timerText.textContent = "Timer: -";
-        scoreBox.innerHTML = "";
+        timerText.textContent = "-";
+        scoreBox.textContent = "0";
 
         scanning = false;
         timer = 30;
 
-        lastQR = "";        // reset anti-spam
+        lastQR = "";
         lastQRTime = 0;
 
     }, 3000);
