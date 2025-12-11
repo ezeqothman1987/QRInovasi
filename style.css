@@ -1,25 +1,26 @@
 /* ============================================================
-   GLOBAL THEME – GAME STYLE
+   GLOBAL GEO THEME
    ============================================================ */
 body {
     margin: 0;
     padding: 0;
     font-family: "Trebuchet MS", Arial, sans-serif;
-    background: linear-gradient(180deg, #0a0f24, #1a2647);
-    color: #e2e6f3;
+    background: linear-gradient(180deg, #2a2f25, #1c1f17);
+    color: #e5e5d8;
     text-align: center;
 }
 
 h1 {
     font-size: 28px;
     margin-top: 20px;
-    color: #4db8ff;
-    text-shadow: 0 0 8px rgba(77,184,255,0.7);
     font-weight: bold;
+    color: #d4e5c2;
+    text-shadow: 0 0 8px rgba(160, 200, 130, 0.55);
 }
 
+
 /* ============================================================
-   CAMERA BOX – GAME LIGHT EFFECT
+   CAMERA BOX – ROCK FRAME
    ============================================================ */
 .video-box {
     margin: 20px auto 12px;
@@ -31,9 +32,9 @@ h1 {
 
     padding: 14px;
     border-radius: 16px;
-    border: 2px solid rgba(77,184,255,0.4);
 
-    box-shadow: 0 0 14px rgba(77,184,255,0.35);
+    border: 2px solid rgba(180, 200, 160, 0.4);
+    box-shadow: 0 0 14px rgba(140,160,120,0.35);
 }
 
 #video {
@@ -42,33 +43,31 @@ h1 {
     background: #000;
 }
 
-/* ============================================================
-   CAMERA STATUS
-   ============================================================ */
 #cameraStatus {
     margin-top: 10px;
     font-size: 15px;
     font-weight: bold;
-    color: #97c9ff;
-    text-shadow: 0 0 4px #005aff;
+    color: #dce9c8;
 }
 
+
 /* ============================================================
-   INFO PANEL – GAME HUD STYLE
+   INFO PANEL – GEO HUD
    ============================================================ */
 .info-panel {
     margin: 15px auto 0;
     width: 92%;
     max-width: 480px;
 
-    background: rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.08);
     backdrop-filter: blur(6px);
 
     padding: 18px 14px;
     border-radius: 16px;
 
-    border: 2px solid rgba(255,255,255,0.2);
-    box-shadow: inset 0 0 12px rgba(0,0,0,0.4), 0 0 16px rgba(77,184,255,0.25);
+    border: 2px solid rgba(180,200,160,0.2);
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.4),
+                0 0 16px rgba(160,200,130,0.18);
 
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -80,19 +79,19 @@ h1 {
 .label {
     font-weight: bold;
     font-size: 16px;
-    color: #b7d9ff;
-    text-shadow: 0 0 4px rgba(100,180,255,0.5);
+    color: #e5f2d5;
 }
 
 .value {
     font-weight: bold;
     font-size: 28px;
-    color: #4db8ff;
-    text-shadow: 0 0 8px rgba(77,184,255,0.8);
+    color: #d4e5c2;
+    text-shadow: 0 0 6px rgba(180,220,160,0.6);
 }
 
+
 /* ============================================================
-   CATEGORY BUTTON PANEL – GAME COLORS
+   CATEGORY BUTTON PANEL – 1 2 / 3 4 LAYOUT
    ============================================================ */
 .button-panel {
     margin: 25px auto 0;
@@ -100,97 +99,100 @@ h1 {
     max-width: 480px;
 
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr 1fr;
     gap: 16px;
 }
 
-/* Base button style */
+/* Base button styling */
 .cat-btn {
-    padding: 16px;
-    font-size: 16px;
+    padding: 18px;
+    font-size: 18px;
     font-weight: bold;
 
-    border-radius: 12px;
+    border-radius: 14px;
     cursor: pointer;
     border: none;
 
     transition: 0.15s ease;
-    text-shadow: 0 0 3px rgba(0,0,0,0.4);
+    color: #fff;
 }
 
-/* Category Colors (Game Style) */
+/* ============================================================
+   GEO COLOR CODING
+   ============================================================ */
+
+/* Igneous – Lava orange/red */
 .ig {
-    background: linear-gradient(135deg, #ff7b00, #ffb266);
-    box-shadow: 0 0 10px rgba(255,140,0,0.7);
+    background: linear-gradient(135deg, #b84c2a, #e0733d);
+    box-shadow: 0 0 12px rgba(200,70,30,0.6);
 }
 
+/* Sedimentary – Sandstone yellow/brown */
 .sd {
-    background: linear-gradient(135deg, #ffd533, #fff099);
-    box-shadow: 0 0 10px rgba(255,220,40,0.7);
+    background: linear-gradient(135deg, #c0a46c, #e7d39b);
+    box-shadow: 0 0 12px rgba(200,170,100,0.6);
 }
 
+/* Metamorphic – Slate purple/grey */
 .mt {
-    background: linear-gradient(135deg, #a75bff, #cda3ff);
-    box-shadow: 0 0 10px rgba(170,120,255,0.7);
+    background: linear-gradient(135deg, #564f62, #857a9e);
+    box-shadow: 0 0 12px rgba(130,120,160,0.55);
 }
 
+/* Mineral – Emerald green */
 .mn {
-    background: linear-gradient(135deg, #00d47a, #7af5c4);
-    box-shadow: 0 0 10px rgba(0,255,150,0.7);
+    background: linear-gradient(135deg, #2d6c50, #4fbf84);
+    box-shadow: 0 0 12px rgba(80,200,150,0.6);
 }
 
-/* Hover glow */
+/* Interaction */
 .cat-btn:hover {
-    transform: scale(1.05);
-    filter: brightness(1.15);
+    transform: scale(1.07);
+    filter: brightness(1.12);
 }
 
-/* Active pressed */
 .cat-btn:active {
     transform: scale(0.95);
 }
 
+
 /* ============================================================
-   START / END BUTTONS
+   START BUTTON
    ============================================================ */
 .start-btn {
-    background: #4db8ff;
+    background: #4fbf84;
     padding: 10px 18px;
-    border: none;
     border-radius: 8px;
-    color: #0a0f24;
+    border: none;
+    color: #0f1813;
     font-weight: bold;
     cursor: pointer;
     transition: 0.2s;
 }
 
 .start-btn:hover {
-    background: #74caff;
     transform: scale(1.05);
 }
+
 
 /* ============================================================
    FULLSCREEN BUTTON
    ============================================================ */
 #fullscreenBtn {
-    color: #4db8ff;
-    font-weight: bold;
-    text-shadow: 0 0 8px rgba(77,184,255,0.7);
+    color: #d4e5c2;
     cursor: pointer;
+    font-weight: bold;
 }
 
 #fullscreenBtn:hover {
-    color: #9bd6ff;
+    color: #f1ffe4;
 }
 
+
 /* ============================================================
-   MOBILE RESPONSIVE
+   MOBILE
    ============================================================ */
 @media (max-width: 600px) {
-    .value {
-        font-size: 24px;
-    }
-    h1 {
-        font-size: 23px;
-    }
+    h1 { font-size: 24px; }
+    .value { font-size: 24px; }
 }
