@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>GeoQuiz QR – Kiosk Edition</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="fullscreenBtn">⛶ Fullscreen</div>
+
+<div class="app-container">
+
+    <h1 class="title">🪨 GEO-QUIZ QR KUMPULAN 1</h1>
+    
+    <div class="arduino-toggle">
+        <label><input type="checkbox" id="arduinoMode"> Arduino Mode</label>
+        <button id="connectArduinoBtn">Connect Arduino</button>
+        <button id="startScanBtn" class="start-btn">🎮 Mula Bermain</button>
+    </div>
+
+    <div class="video-box">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="qr-canvas" hidden></canvas>
+        <div id="cameraStatus" class="camera-status"></div>
+    </div>
+
+    <div class="info-panel">
+        <div class="label">Nama Batuan:</div>
+        <div id="rockName" class="value">–</div>
+
+        <div class="label">Masa:</div>
+        <div id="timer" class="value">–</div>
+
+        <div class="label">Markah:</div>
+        <div id="score" class="value">0</div>
+    </div>
+
+    <div class="button-panel">
+        <button class="cat-btn ig" onclick="chooseCategory('igneous')">Igneus</button>
+        <button class="cat-btn sd" onclick="chooseCategory('sedimentary')">Sedimen</button>
+        <button class="cat-btn mt" onclick="chooseCategory('metamorphic')">Metamorph</button>
+    </div>
+
+</div>
+
+<div id="endModal" class="modal">
+    <div class="modal-content">
+        <h2>Tamat Permainan!</h2>
+        <p>Total Markah: <span id="finalScore"></span></p>
+
+        <input id="playerName" placeholder="Isikan Nama Anda">
+        <button onclick="saveHallOfFame()">Simpan ke Hall of Fame</button>
+        <button onclick="resetGame()">Main Lagi</button>
+    </div>
+</div>
+
+<div class="sidebar">
+    <div class="hof-box">
+        <h2>🏆 Hall of Fame</h2>
+        <ul id="hofList"></ul>
+    </div>
+    
+    <div class="qr-gallery-box">
+        <h2>📁 QR Images</h2>
+        <div class="upload-section">
+            <input type="file" id="qrUpload" accept="image/*" multiple>
+            <button id="uploadBtn">Upload</button>
+        </div>
+        <div id="qrGallery" class="qr-gallery"></div>
+        <p class="hint">Klik gambar untuk simulate scan</p>
+    </div>
+</div>
+
+<script src="https://unpkg.com/jsqr"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
