@@ -1,5 +1,5 @@
 /* ============================================================
-   FIXED + CLEAN VERSION (Option C: Overlay only after Start)
+   GeoQuiz QR – SCRIPT.JS (VERSI DIBETULKAN)
    ============================================================ */
 
 /* ============================================================
@@ -7,6 +7,9 @@
    ============================================================ */
 const QR_PATH = "static/qr_images/";
 
+/* Akan auto-load ikut nama fail dalam folder: (OPTIONAL)
+   Buat manual dulu:
+*/
 const validQRImages = ["granite", "gneiss"];
 
 /* ============================================================
@@ -28,13 +31,15 @@ const rockNameBox = document.getElementById("rockName");
 const startBtn = document.getElementById("startScanBtn");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 const scannerOverlay = document.getElementById("scannerOverlay");
+const qrCanvas = document.getElementById("qr-canvas");
+const qrCtx = qrCanvas.getContext("2d");
 
 /* ============================================================
    4) SETTING GLOBAL
    ============================================================ */
 let stream = null;
-let scanning = false;
-let scanningActive = false;
+let scanning = false;        // sedang proses 1 QR
+let scanningActive = false;  // kamera menyala & scan loop aktif
 let timer = 30;
 let timerInterval = null;
 
@@ -48,59 +53,79 @@ const QR_COOLDOWN = 3000;
 /* ============================================================
    8) FULLSCREEN BUTTON
    ============================================================ */
-fullscreenBtn.addEventListener("click", () => {
+fullscreenBtn?.addEventListener("click", () => {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen();
     else document.exitFullscreen();
 });
 
 /* ============================================================
-   OVERLAY HELPERS (OPTION C)
+   OVERLAY CONTROL
    ============================================================ */
 function showOverlay() {
-    if (scannerOverlay) scannerOverlay.style.display = "block";
+    scannerOverlay.style.display = "block";
 }
 function hideOverlay() {
-    if (scannerOverlay) scannerOverlay.style.display = "none";
+    scannerOverlay.style.display = "none";
 }
 function updateOverlayState() {
-    if (!scannerOverlay) return;
-    if (scanningActive && !scanning) showOverlay(); else hideOverlay();
+    if (!scanningActive) {
+        hideOverlay();
+        return;
+    }
+    if (!scanning) showOverlay();
+    else hideOverlay();
 }
 
 /* ============================================================
    9) START / STOP GAME
    ============================================================ */
-startBtn.addEventListener("click", async () => {
+startBtn?.addEventListener("click", async () => {
+
+    /* =========================
+       START GAME
+       ========================= */
     if (!scanningActive) {
         const ok = await startCamera();
         if (!ok) return;
 
         if (typeof jsQR !== "function") {
-            statusText.textContent = "jsQR tidak ditemui.";
+            statusText.textContent = "Ralat: jsQR tidak ditemui.";
             stopCamera();
             return;
         }
 
         scanningActive = true;
         scanning = false;
+
         startBtn.textContent = "■ Tamat Permainan";
         statusText.textContent = "Kamera diaktifkan. Sedia untuk scan.";
-
-        updateOverlayState();
-        requestAnimationFrame(scanQR);
-
-    } else {
-        stopCamera();
-        scanningActive = false;
-        scanning = false;
-        startBtn.textContent = "🎮 Mula Bermain";
-        statusText.textContent = "Permainan dihentikan.";
-        clearInterval(timerInterval);
         timerText.textContent = "-";
         scoreBox.textContent = "0";
         rockNameBox.textContent = "–";
+
         updateOverlayState();
+
+        requestAnimationFrame(scanQR);   // hanya mula scan selepas kamera start
+
+        return;
     }
+
+    /* =========================
+       STOP GAME
+       ========================= */
+    scanningActive = false;
+    scanning = false;
+
+    startBtn.textContent = "🎮 Mula Bermain";
+    statusText.textContent = "Permainan dihentikan.";
+
+    stopCamera();
+
+    clearInterval(timerInterval);
+    timerText.textContent = "-";
+    scoreBox.textContent = "0";
+    rockNameBox.textContent = "–";
+    updateOverlayState();
 });
 
 /* ============================================================
@@ -108,14 +133,20 @@ startBtn.addEventListener("click", async () => {
    ============================================================ */
 async function startCamera() {
     try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" },
+            audio: false
+        });
+
         video.srcObject = stream;
         video.setAttribute("playsinline", true);
         await video.play();
-        hideOverlay();
+
         return true;
+
     } catch (err) {
         statusText.textContent = "Gagal mengakses kamera.";
+        console.error(err);
         return false;
     }
 }
@@ -135,43 +166,53 @@ function stopCamera() {
    12) SCAN QR LOOP
    ============================================================ */
 function scanQR() {
-    if (!scanningActive) return;
+    if (!scanningActive) return;  // pastikan scan tak berjalan jika game stop
 
     updateOverlayState();
 
-    const canvas = document.getElementById("qr-canvas") || document.createElement("canvas");
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    if (canvas.width === 0 || canvas.height === 0) {
+    if (video.readyState !== video.HAVE_ENOUGH_DATA) {
         requestAnimationFrame(scanQR);
         return;
     }
 
-    let qr = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+    // setup canvas
+    qrCanvas.width = video.videoWidth;
+    qrCanvas.height = video.videoHeight;
+
+    qrCtx.drawImage(video, 0, 0, qrCanvas.width, qrCanvas.height);
+
+    let imgData = qrCtx.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
+
+    let qr = jsQR(imgData.data, qrCanvas.width, qrCanvas.height);
 
     if (!scanning && qr) {
+
         const raw = qr.data.trim().toLowerCase();
         const now = Date.now();
+
+        // Anti spam
         if (raw === lastQR && now - lastQRTime < QR_COOLDOWN) {
             requestAnimationFrame(scanQR);
             return;
         }
+
         lastQR = raw;
         lastQRTime = now;
 
         if (validQRImages.includes(raw)) {
-            scanning = true;
+
+            scanning = true;   // block QR lain
             hideOverlay();
+
             statusText.innerHTML = `QR dikesan: <b>${raw}</b>`;
-            timer += 5; if (timer > 30) timer = 30;
+
             startTimer(raw);
+
         } else {
             statusText.textContent = "QR tidak sah.";
         }
     }
+
     requestAnimationFrame(scanQR);
 }
 
@@ -184,9 +225,11 @@ function startTimer(rockName) {
     rockNameBox.textContent = rockNameMapping(rockName);
 
     clearInterval(timerInterval);
+
     timerInterval = setInterval(() => {
         timer--;
         timerText.textContent = timer;
+
         if (timer <= 0) {
             clearInterval(timerInterval);
             calculateScore(rockName);
@@ -196,7 +239,9 @@ function startTimer(rockName) {
 
 function rockNameMapping(raw) {
     if (!raw) return "–";
-    return rockCategory[raw] ? `${raw} — ${rockCategory[raw]}` : raw;
+    return rockCategory[raw] ?
+        `${raw} — ${rockCategory[raw]}` :
+        raw;
 }
 
 /* ============================================================
@@ -204,18 +249,22 @@ function rockNameMapping(raw) {
    ============================================================ */
 function calculateScore(rockName) {
     clearInterval(timerInterval);
+
     const used = 30 - timer;
     const score = Math.max(1, Math.min(10, 10 - Math.floor(used / 3)));
+
     scoreBox.textContent = score;
 
     setTimeout(() => {
         statusText.textContent = "Sedia scan seterusnya.";
         timerText.textContent = "-";
         scoreBox.textContent = "0";
-        scanning = false;
+        scanning = false;  // buka semula untuk QR seterusnya
         timer = 30;
+
         lastQR = "";
         lastQRTime = 0;
+
         updateOverlayState();
     }, 3000);
 }
@@ -233,6 +282,7 @@ function saveHallOfFame() {
     const arr = JSON.parse(localStorage.getItem("hof") || "[]");
     arr.push(rec);
     localStorage.setItem("hof", JSON.stringify(arr));
+
     loadHallOfFame();
 }
 
@@ -241,7 +291,8 @@ function loadHallOfFame() {
     if (!list) return;
 
     list.innerHTML = "";
-    const arr = JSON.parse(localStorage.getItem("hof") || "[]").sort((a, b) => b.score - a.score);
+    const arr = JSON.parse(localStorage.getItem("hof") || "[]")
+        .sort((a, b) => b.score - a.score);
 
     arr.forEach((r, i) => {
         const li = document.createElement("li");
@@ -250,3 +301,4 @@ function loadHallOfFame() {
         if (i === 0) li.classList.add("top-score");
         list.appendChild(li);
     });
+}
