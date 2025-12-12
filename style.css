@@ -1,5 +1,9 @@
 /* ============================================================
-   GLOBAL GEO THEME
+   GEO QUIZ STYLE — FULL VERSION (UPDATED & COMMENTED)
+   ============================================================ */
+
+/* ============================================================
+   0) GLOBAL THEME (ASAL)
    ============================================================ */
 body {
     margin: 0;
@@ -18,21 +22,18 @@ h1 {
     text-shadow: 0 0 8px rgba(160, 200, 130, 0.55);
 }
 
-
 /* ============================================================
-   CAMERA BOX – ROCK FRAME
+   1) CAMERA BOX
    ============================================================ */
 .video-box {
     margin: 20px auto 12px;
     width: 92%;
     max-width: 480px;
-    position: relative;   /* <<< WAJIB supaya overlay align atas video */
+    position: relative;
     background: rgba(255,255,255,0.05);
     backdrop-filter: blur(5px);
-
     padding: 14px;
     border-radius: 16px;
-
     border: 2px solid rgba(180, 200, 160, 0.4);
     box-shadow: 0 0 14px rgba(140,160,120,0.35);
 }
@@ -49,10 +50,10 @@ h1 {
     font-weight: bold;
     color: #dce9c8;
 }
+
 /* ============================================================
-   ANIMASI SCANNING LINE
+   2) SCANNER OVERLAY
    ============================================================ */
-/* Overlay menyeluruh */
 .scanner-overlay {
     position: absolute;
     top: 0;
@@ -62,7 +63,6 @@ h1 {
     pointer-events: none;
 }
 
-/* Kawasan kotak scan */
 .scan-area {
     position: absolute;
     top: 50%;
@@ -74,25 +74,21 @@ h1 {
     box-shadow: 0 0 20px rgba(0,255,0,0.3);
 }
 
-/* Garis laser bergerak */
 .scan-line {
     position: absolute;
     top: 0;
-    left: 0;
     width: 100%;
     height: 3px;
-    background: rgba(255, 0, 0, 0.9);
-    box-shadow: 0 0 10px red;
+    background: rgba(255,0,0,0.9);
     animation: scan-move 3s linear infinite;
 }
 
-/* Animasi turun naik */
 @keyframes scan-move {
     0% { top: 0; }
     100% { top: 100%; }
 }
 
-/* Corner neon */
+/* Scanner corners */
 .scan-corner {
     position: absolute;
     width: 30px;
@@ -107,28 +103,22 @@ h1 {
 
 
 /* ============================================================
-   INFO PANEL – GEO HUD
+   3) INFO PANEL
    ============================================================ */
 .info-panel {
     margin: 15px auto 0;
     width: 92%;
     max-width: 480px;
-
     background: rgba(255,255,255,0.08);
     backdrop-filter: blur(6px);
-
     padding: 18px 14px;
     border-radius: 16px;
-
     border: 2px solid rgba(180,200,160,0.2);
     box-shadow: inset 0 0 12px rgba(0,0,0,0.4),
                 0 0 16px rgba(160,200,130,0.18);
-
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap: 16px;
-
-    text-align: center;
 }
 
 .label {
@@ -144,75 +134,40 @@ h1 {
     text-shadow: 0 0 6px rgba(180,220,160,0.6);
 }
 
-
 /* ============================================================
-   CATEGORY BUTTON PANEL – 1 2 / 3 4 LAYOUT
+   4) BUTTON PANEL
    ============================================================ */
 .button-panel {
     margin: 25px auto 0;
     width: 92%;
     max-width: 480px;
-
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
 }
 
-/* Base button styling */
 .cat-btn {
     padding: 18px;
     font-size: 18px;
     font-weight: bold;
-
     border-radius: 14px;
     cursor: pointer;
     border: none;
-
-    transition: 0.15s ease;
     color: #fff;
+    transition: 0.15s ease;
 }
+
+/* CATEGORY COLORS */
+.ig { background: linear-gradient(135deg, #b84c2a, #e0733d); }
+.sd { background: linear-gradient(135deg, #c0a46c, #e7d39b); }
+.mt { background: linear-gradient(135deg, #564f62, #857a9e); }
+.mn { background: linear-gradient(135deg, #2d6c50, #4fbf84); }
+
+.cat-btn:hover { transform: scale(1.07); }
+.cat-btn:active { transform: scale(0.95); }
 
 /* ============================================================
-   GEO COLOR CODING
-   ============================================================ */
-
-/* Igneous – Lava orange/red */
-.ig {
-    background: linear-gradient(135deg, #b84c2a, #e0733d);
-    box-shadow: 0 0 12px rgba(200,70,30,0.6);
-}
-
-/* Sedimentary – Sandstone yellow/brown */
-.sd {
-    background: linear-gradient(135deg, #c0a46c, #e7d39b);
-    box-shadow: 0 0 12px rgba(200,170,100,0.6);
-}
-
-/* Metamorphic – Slate purple/grey */
-.mt {
-    background: linear-gradient(135deg, #564f62, #857a9e);
-    box-shadow: 0 0 12px rgba(130,120,160,0.55);
-}
-
-/* Mineral – Emerald green */
-.mn {
-    background: linear-gradient(135deg, #2d6c50, #4fbf84);
-    box-shadow: 0 0 12px rgba(80,200,150,0.6);
-}
-
-/* Interaction */
-.cat-btn:hover {
-    transform: scale(1.07);
-    filter: brightness(1.12);
-}
-
-.cat-btn:active {
-    transform: scale(0.95);
-}
-
-
-/* ============================================================
-   START BUTTON
+   5) START BUTTON
    ============================================================ */
 .start-btn {
     background: #4fbf84;
@@ -225,98 +180,55 @@ h1 {
     transition: 0.2s;
 }
 
-.start-btn:hover {
-    transform: scale(1.05);
-}
-
+.start-btn:hover { transform: scale(1.05); }
 
 /* ============================================================
-   FULLSCREEN BUTTON
+   6) FULLSCREEN BUTTON
    ============================================================ */
 #fullscreenBtn {
     color: #d4e5c2;
     cursor: pointer;
     font-weight: bold;
 }
-
-#fullscreenBtn:hover {
-    color: #f1ffe4;
-}
+#fullscreenBtn:hover { color: #f1ffe4; }
 
 
 /* ============================================================
-   MOBILE
-   ============================================================ */
-@media (max-width: 600px) {
-    h1 { font-size: 24px; }
-    .value { font-size: 24px; }
-}
-
-
-/* ============================================================
-   HALL OF FAME SIDEBAR – GEO THEME (NEW)
+   7) HALL OF FAME SIDEBAR
    ============================================================ */
 .sidebar {
     position: fixed;
     right: 20px;
     top: 20px;
     width: 260px;
-
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(6px);
-
     padding: 15px;
     border-radius: 15px;
-
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(6px);
     border: 2px solid rgba(180,200,160,0.3);
     box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-
     z-index: 999;
 }
 
 .hof-box h2 {
-    text-align: center;
     margin-bottom: 12px;
     font-size: 20px;
     color: #e5f2d5;
 }
 
-#hofList {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
+#hofList { list-style: none; padding: 0; margin: 0; }
 
 .hof-item {
     background: rgba(255,255,255,0.08);
     padding: 10px;
     border-radius: 8px;
     margin-bottom: 8px;
-
     border: 1px solid rgba(180,200,160,0.25);
     box-shadow: 0 0 8px rgba(0,0,0,0.25);
-
     font-size: 15px;
-    color: #e5e5d8;
 }
 
-
-/* MOBILE: Hall of Fame turun ke bawah */
-@media (max-width: 800px) {
-    .sidebar {
-        position: relative;
-        width: calc(100% - 40px);
-        right: 0;
-        margin: 20px auto;
-        top: 0;
-    }
-}
-
-/* ============================================================
-   HALL OF FAME ANIMATIONS
-   ============================================================ */
-
-/* Slide-in dari kanan */
+/* Animation */
 .hof-item {
     animation: slideIn 0.45s ease forwards;
     opacity: 0;
@@ -324,42 +236,105 @@ h1 {
 }
 
 @keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(40px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(40px); }
+    to   { opacity: 1; transform: translateX(0); }
 }
 
-/* Highlight tempat pertama */
 .hof-item.top-score {
     border: 2px solid #8cff96;
     background: rgba(120,255,140,0.15);
     box-shadow: 0 0 12px rgba(80,255,120,0.55);
     transform: scale(1.03);
 }
+
 /* ============================================================
-   ANSWER FEEDBACK FLASH (HIJAU / MERAH PADA BUTTON PANEL SAHAJA)
+   8) ANSWER FLASH FEEDBACK
    ============================================================ */
-
-.button-panel.flash-green {
-    animation: flashGreen 0.35s ease-out;
-}
-
-.button-panel.flash-red {
-    animation: flashRed 0.35s ease-out;
-}
+.button-panel.flash-green { animation: flashGreen 0.35s ease-out; }
+.button-panel.flash-red   { animation: flashRed 0.35s ease-out; }
 
 @keyframes flashGreen {
-    0% { background: rgba(0, 255, 0, 0.35); }
+    0% { background: rgba(0,255,0,0.35); }
     100% { background: transparent; }
 }
 
 @keyframes flashRed {
-    0% { background: rgba(255, 0, 0, 0.35); }
+    0% { background: rgba(255,0,0,0.35); }
     100% { background: transparent; }
 }
 
+/* ============================================================
+   9) THEME SYSTEM — LIGHT MODE (NEW)
+   ============================================================ */
+body.light-theme {
+    background: linear-gradient(180deg, #f3f3e8, #eaeada);
+    color: #222;
+}
+
+body.light-theme h1 {
+    color: #3a4a2a;
+    text-shadow: 0 0 4px rgba(100,120,80,0.3);
+}
+
+body.light-theme .video-box,
+body.light-theme .info-panel,
+body.light-theme .sidebar {
+    background: rgba(255,255,255,0.6);
+    color: #222;
+}
+
+body.light-theme .value {
+    color: #2a3a1a;
+    text-shadow: none;
+}
+
+body.light-theme .ig { background: linear-gradient(135deg, #ff9b7d, #ffb199); }
+body.light-theme .sd { background: linear-gradient(135deg, #f2d28b, #ffe7b1); }
+body.light-theme .mt { background: linear-gradient(135deg, #afa6c3, #d4ccec); }
+body.light-theme .mn { background: linear-gradient(135deg, #6dd8a3, #a0ffd0); }
+
+/* ============================================================
+   10) KIOSK MODE (BESARKAN UI)
+   ============================================================ */
+body.kiosk .title {
+    font-size: 32px;
+    margin-top: 30px;
+}
+
+body.kiosk .cat-btn {
+    padding: 22px;
+    font-size: 24px;
+}
+
+body.kiosk #fullscreenBtn {
+    font-size: 22px;
+}
+
+/* ============================================================
+   11) SCAN DETECT FLASH (NEW)
+   ============================================================ */
+.scan-detect {
+    animation: scanFlash 0.35s ease-out;
+}
+
+@keyframes scanFlash {
+    0%   { box-shadow: 0 0 25px rgba(0,255,0,0.8); }
+    100% { box-shadow: none; }
+}
+
+/* ============================================================
+   12) RESPONSIVE FIXES
+   ============================================================ */
+@media (max-width: 600px) {
+    h1 { font-size: 24px; }
+    .value { font-size: 24px; }
+}
+
+@media (max-width: 800px) {
+    .sidebar {
+        position: relative;
+        width: calc(100% - 40px);
+        right: 0;
+        margin: 20px auto;
+    }
+}
