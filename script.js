@@ -1,14 +1,13 @@
 /* ============================================================
-   1) SENARAI QR SAH (guna nama fail tanpa extension)
+   1) SENARAI QR SAH (guna nama fail tanpa extension dlm qr_images)
    ============================================================ */
-/* Path betul untuk GitHub Pages: folder berada di repo root */
+/* 4 GitHub Pages: folder repo root */
 const QR_PATH = "static/qr_images/";
 
-/* Hanya 'qr' wujud sekarang. Yang lain diletakkan sebagai placeholder
-   — bila anda sudah ada gambar, buang '//' pada nama tersebut. */
+/* QR or Image je - adding, buang '//' pada nama tersebut. */
 const validQRImages = [
-    "qr",
-    // "batu2",
+    "GRANITE",
+      "GNEISS",
     // "batu3",
     // "batu4",
     // "batu5",
@@ -28,8 +27,8 @@ const validQRImages = [
    2) KATEGORI BATU
    ============================================================ */
 const rockCategory = {
-    qr: "Igneus",
-    batu2: "Igneus",
+    GRANITE: "Igneus",
+    GNEISS: "Metamorf",
     batu3: "Sedimen",
     batu4: "Sedimen",
     batu5: "Metamorf",
@@ -46,7 +45,7 @@ const rockCategory = {
 };
 
 /* ============================================================
-   3) AMBIL ELEMEN HTML
+   3) PULL ELEMEN HTML
    ============================================================ */
 const video = document.getElementById("video");
 const statusText = document.getElementById("cameraStatus");
@@ -57,7 +56,7 @@ const startBtn = document.getElementById("startScanBtn");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 
 /* ============================================================
-   4) PEMBOLEH UBAH GLOBAL
+   4) SETTING GLOBAL
    ============================================================ */
 let stream = null;
 let scanning = false;         // locked while handling one QR
@@ -66,26 +65,26 @@ let timer = 30;
 let timerInterval = null;
 
 /* ============================================================
-   5) AUDIO (dikekalkan sebagai komen — sediakan fail kemudian)
+   5) AUDIO ( Add fail kemudian)
    ============================================================ */
 // const scanSound = new Audio("static/sound/scan.mp3");   // bunyi QR sah
 // const bonusSound = new Audio("static/sound/bonus.mp3"); // bunyi tambah masa
 // const wrongSound = new Audio("static/sound/wrong.mp3"); // bunyi salah
 
 /* ============================================================
-   6) ANTI-SPAM QR
+   6) ANTI-SPAM QR (elak doublescan n crash)
    ============================================================ */
 let lastQR = "";
 let lastQRTime = 0;
 const QR_COOLDOWN = 3000;
 
 /* ============================================================
-   7) (TIDAK AUTOSTART) — Kamera akan diaktifkan bila user tekan start
+   7) (NO AUTOSTART) — Kamera aktif bila user tekan start
    ============================================================ */
 /* Jangan panggil getUserMedia di sini; akan dipanggil oleh startCamera() */
 
 /* ============================================================
-   8) FULLSCREEN (butang)
+   8) FULLSCREEN (butang) KIOSK Mode
    ============================================================ */
 fullscreenBtn.addEventListener("click", () => {
     if (!document.fullscreenElement) {
@@ -98,7 +97,7 @@ fullscreenBtn.addEventListener("click", () => {
 });
 
 /* ============================================================
-   9) START / STOP GAME (TOGGLE) — Kamera hanya hidup bila Mula Bermain
+   9) START / STOP GAME (TOGGLE) — Kamera hidup bila Mula Bermain
    ============================================================ */
 startBtn.addEventListener("click", async () => {
     if (!scanningActive) {
@@ -128,7 +127,7 @@ startBtn.addEventListener("click", async () => {
 });
 
 /* ============================================================
-   10) START CAMERA
+   10) START CAMERA (Setting)
    ============================================================ */
 async function startCamera() {
     try {
@@ -145,7 +144,7 @@ async function startCamera() {
 }
 
 /* ============================================================
-   11) STOP CAMERA
+   11) STOP CAMERA (setting)
    ============================================================ */
 function stopCamera() {
     if (stream) {
@@ -156,7 +155,7 @@ function stopCamera() {
 }
 
 /* ============================================================
-   12) SCAN QR SETIAP FRAME (hanya bila scanningActive = true)
+   12) SCAN QR SETIAP FRAME (bila scanningActive = true)
    ============================================================ */
 function scanQR() {
     if (!scanningActive) return;           // if game not active, don't scan
@@ -196,13 +195,13 @@ function scanQR() {
 
         // SEMAK QR SAH
         if (validQRImages.includes(raw)) {
-            const fullQRPath = QR_PATH + raw + ".jpeg"; // gunakan .jpeg kerana anda ada qr.jpeg
+            const fullQRPath = QR_PATH + raw + ".png"; // TUKAR ikut format QR/BARCODE/RFID?
             console.log("QR image path:", fullQRPath);
 
             scanning = true;
             statusText.innerHTML = `QR dikesan: <b>${raw}</b> (sah)`;
 
-            // Bunyi scan berjaya (jika anda keluarkan komen pada audio file)
+            // Bunyi scan berjaya (nak pakai, keluarkan komen pada audio file)
             // scanSound.currentTime = 0;
             // scanSound.play();
 
@@ -267,11 +266,11 @@ function calculateScore(rockName) {
     scoreBox.textContent = score;
 
     // beri feedback ke Arduino: CORRECT/WRONG
-    // (bergantung pada kategori yang dipilih oleh pemain; integrasi contoh di chooseCategory)
+    // (bergantung pada kategori yang dipilih oleh pemain; integrasi di chooseCategory)
     // sendToArduino("SCORE:" + score);
 
     setTimeout(() => {
-        statusText.textContent = "Sedia untuk scan batu seterusnya.";
+        statusText.textContent = "Sedia untuk scan seterusnya.";
         timerText.textContent = "-";
         scoreBox.textContent = "0";
 
@@ -289,8 +288,8 @@ function calculateScore(rockName) {
    ============================================================ */
 function chooseCategory(cat) {
     // cat = 'igneous' / 'sedimentary' / 'metamorphic' / 'mineral'
-    // anda boleh sambungkan logik untuk nilaikan betul / salah.
-    // contoh: bandingkan dengan rockCategory[currentQR]
+    // sambungkan logik untuk nilaikan betul / salah.
+    // eg: bandingkan dengan rockCategory[currentQR]
     sendToArduino("CAT:" + cat);
     console.log("Category chosen:", cat);
 }
@@ -406,14 +405,14 @@ async function listenToArduino() {
                 chooseCategory(btn);
             }
 
-            // anda boleh tambah handling lain di sini
+            // tambah handling lain kat sini
         }
     } catch (err) {
         console.error("Error baca serial:", err);
     }
 }
 
-/* Hantar data ke Arduino — hanya jika checkbox ticked dan writer tersedia */
+/* Hantar data ke Arduino —if checkbox ticked dan writer tersedia */
 function sendToArduino(msg) {
     if (!arduinoCheckbox || !arduinoCheckbox.checked) return;
     if (!serialWriter) return;
@@ -425,7 +424,7 @@ function sendToArduino(msg) {
 }
 
 /* ============================================================
-   17) HALL OF FAME & UTILS (basic)
+   17) HALL OF FAME & UTILS (enhance mode)
    ============================================================ */
 function saveHallOfFame() {
     const nameEl = document.getElementById("playerName");
