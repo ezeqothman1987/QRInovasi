@@ -206,10 +206,16 @@ function scanLoop(){
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const code = (typeof jsQR !== "undefined") ? jsQR(imageData.data, canvas.width, canvas.height) : null;
 
-            // Accept scans only if no active question and not debounced
-            if (code && !awaitingAnswer && !qrDebounce) {
+            // Accept scans only if no active question, not debounced, and not in cooldown
+            if (code && !awaitingAnswer && !qrDebounce && !isCooldown) {
+                // short debounce to avoid duplicate frame reads
                 qrDebounce = true;
                 setTimeout(()=> qrDebounce = false, 1200);
+
+                // enable cooldown so new scans are ignored for a short period (3s)
+                isCooldown = true;
+                setTimeout(()=> { isCooldown = false; }, 2000);
+
                 processScannedQR(code.data);
             }
         } catch(e) {
@@ -227,26 +233,17 @@ function scanLoop(){
    ========================= */
 function processScannedQR(payload){
     if (!payload) return;
+    // jika dalam cooldown, ignore
+    if (isCooldown) return;
+
     const txt = String(payload).trim().toLowerCase();
 
     if (txt !== "betul" && txt !== "salah") {
         console.log("Unrecognized QR payload (expect 'betul'/'salah'):", txt);
         return;
-   // Kalau masih dalam cooldown, jangan baca QR baru
-    if (isCooldown) return;
-
-    if (qrData !== lastQR) {
-        lastQR = qrData;
-        startQuestionTimer();
     }
 
-    // Aktifkan cooldown 3 saat
-    isCooldown = true;
-    setTimeout(() => {
-        isCooldown = false;
-    }, 2000); // 2000 ms = 2 saat
-    }
-
+    // register current question
     lastQR = txt;
     awaitingAnswer = true;
     timeRemaining = ROUND_TIME;
@@ -257,6 +254,7 @@ function processScannedQR(payload){
     setText("rockName", "MULA MENJAWAB");
     if (el("cameraStatus")) el("cameraStatus").textContent = "Sila jawab sekarang!";
 }
+
 
 /* =========================
    08) QUESTION TIMER
@@ -271,7 +269,7 @@ function startQuestionTimer(){
         timeRemaining--;
         setText("timer", String(timeRemaining));
         if (timeRemaining <= 0) {
-            soundTimeUp.play().catch(()=>{});
+            safePlay(soundTimeup);
             stopQuestionTimer();
             endGame();
         }
