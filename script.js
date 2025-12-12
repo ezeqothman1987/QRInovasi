@@ -233,8 +233,6 @@ function scanLoop(){
    ========================= */
 function processScannedQR(payload){
     if (!payload) return;
-    // jika dalam cooldown, ignore
-    if (isCooldown) return;
 
     const txt = String(payload).trim().toLowerCase();
 
@@ -243,7 +241,6 @@ function processScannedQR(payload){
         return;
     }
 
-    // register current question
     lastQR = txt;
     awaitingAnswer = true;
     timeRemaining = ROUND_TIME;
@@ -254,7 +251,6 @@ function processScannedQR(payload){
     setText("rockName", "MULA MENJAWAB");
     if (el("cameraStatus")) el("cameraStatus").textContent = "Sila jawab sekarang!";
 }
-
 
 /* =========================
    08) QUESTION TIMER
