@@ -76,12 +76,20 @@
     </div>
 </div>
 
-<!-- HALL OF FAME -->
-<div class="sidebar">
-    <div class="hof-box">
-        <h2>🏆 Hall of Fame</h2>
-        <ul id="hofList"></ul>
-    </div>
+<!-- ==========================================
+     HALL OF FAME — PAPARAN NAMA & SIMPAN
+=========================================== -->
+<div id="hallOfFameScreen" style="display:none; text-align:center; padding:20px;">
+    <h2>Markah Akhir: <span id="finalScore">0</span></h2>
+
+    <p>Sila masukkan nama anda:</p>
+    <input id="playerName" type="text" placeholder="Nama anda…" style="padding:10px; font-size:18px;">
+
+    <br><br>
+
+    <button id="saveNameBtn" style="padding:12px 25px; font-size:18px;">
+        Simpan Ke Hall of Fame
+    </button>
 </div>
 
 <script>
