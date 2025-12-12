@@ -182,7 +182,7 @@ function scanQR() {
     const qr = jsQR(imageData.data, canvas.width, canvas.height);
 
     if (!scanning && qr) {
-        const raw = qr.data.trim().toLowerCase();
+        const raw = qr.data.trim().toUpperCase();
 
         // ANTI-SPAM COOLDOWN
         const now = Date.now();
