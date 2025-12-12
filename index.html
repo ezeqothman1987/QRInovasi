@@ -29,10 +29,14 @@
 <div id="hallOfFameSidebar" class="sidebar">
     <div class="hof-box">
         <h2>🏆 Hall of Fame</h2>
+
+        <!-- BUTTON CLEAR HOF) -->
+        <button id="clearHOFBtn" class="clear-hof-btn">Reset Rekod</button>
+
         <ul id="hofList"></ul>
     </div>
-</div>    
-    
+</div> 
+
 <!-- ==========================
      MAIN APP CONTAINER
      ========================== -->
@@ -121,7 +125,22 @@
         if (typeof loadHallOfFame === "function") loadHallOfFame();
     });
 </script>
-
+<!-- ==========================
+     BUTTON CLEAR HOF HANDLER
+     ========================== -->
+<script>
+document.addEventListener("DOMContentLoaded", ()=>{
+    const btn = document.getElementById("clearHOFBtn");
+    if (btn) {
+        btn.addEventListener("click", ()=>{
+            if (confirm("Padam semua rekod Hall of Fame?")) {
+                localStorage.removeItem("hof");
+                if (typeof loadHallOfFame === "function") loadHallOfFame();
+            }
+        });
+    }
+});
+</script>
 <!-- ==========================
      JSQR LIBRARY (WAJIB DIDAHULUKAN)
      ========================== -->
