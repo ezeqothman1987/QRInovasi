@@ -7,20 +7,10 @@ const QR_PATH = "static/qr_images/";
 /* QR or Image je - adding, buang '//' pada nama tersebut. */
 const validQRImages = [
     "granite",
-      "gneiss",
+    "gneiss",
     // "batu3",
     // "batu4",
-    // "batu5",
-    // "batu6",
-    // "batu7",
-    // "batu8",
-    // "batu9",
-    // "batu10",
-    // "batu11",
-    // "batu12",
-    // "batu13",
-    // "batu14",
-    // "batu15"
+    // ...
 ];
 
 /* ============================================================
@@ -55,11 +45,14 @@ const rockNameBox = document.getElementById("rockName");
 const startBtn = document.getElementById("startScanBtn");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 
+// overlay element (must exist in index.html with id="scannerOverlay")
+const scannerOverlay = document.getElementById("scannerOverlay");
+
 /* ============================================================
    4) SETTING GLOBAL
    ============================================================ */
 let stream = null;
-let scanning = false;         // locked while handling one QR
+let scanning = false;         // locked while handling one QR (QR detected & handling)
 let scanningActive = false;   // overall game active (kamera + scanning)
 let timer = 30;
 let timerInterval = null;
@@ -97,6 +90,33 @@ fullscreenBtn.addEventListener("click", () => {
 });
 
 /* ============================================================
+   Overlay helpers (show/hide + small guard to avoid unnecessary DOM writes)
+   ============================================================ */
+function showOverlay() {
+    if (!scannerOverlay) return;
+    if (scannerOverlay.style.display === "block") return;
+    scannerOverlay.style.display = "block";
+}
+
+function hideOverlay() {
+    if (!scannerOverlay) return;
+    if (scannerOverlay.style.display === "none") return;
+    scannerOverlay.style.display = "none";
+}
+
+/* update overlay according to current state:
+   Choice C: overlay visible only when scanningActive && !scanning (i.e. camera on and no QR detected)
+*/
+function updateOverlayState() {
+    if (!scannerOverlay) return;
+    if (scanningActive && !scanning) {
+        showOverlay();
+    } else {
+        hideOverlay();
+    }
+}
+
+/* ============================================================
    9) START / STOP GAME (TOGGLE) — Kamera hidup bila Mula Bermain
    ============================================================ */
 startBtn.addEventListener("click", async () => {
@@ -104,10 +124,26 @@ startBtn.addEventListener("click", async () => {
         // START game
         const ok = await startCamera();
         if (!ok) return; // jika gagal access camera, jangan teruskan
+
+        // ensure jsQR is available
+        if (typeof jsQR !== "function") {
+            console.error("jsQR library tidak ditemui. Pastikan <script src='...jsQR.js'></script> dimasukkan sebelum script.js");
+            statusText.textContent = "jsQR tidak ditemui — scanner tidak boleh dijalankan.";
+            stopCamera();
+            return;
+        }
+
         scanningActive = true;
+        scanning = false;
         startBtn.textContent = "■ Tamat Permainan";
         statusText.textContent = "Kamera diaktifkan. Sedia untuk scan.";
+
+        // Show overlay initially (Choice C: overlay visible when no QR detected)
+        updateOverlayState();
+
+        // start scanning loop
         requestAnimationFrame(scanQR);
+
         // Hantar signal ke Arduino (jika ada)
         sendToArduino("START");
     } else {
@@ -121,6 +157,10 @@ startBtn.addEventListener("click", async () => {
         timerText.textContent = "-";
         scoreBox.textContent = "0";
         rockNameBox.textContent = "–";
+
+        // hide overlay when stopped
+        updateOverlayState();
+
         // Hantar signal ke Arduino (jika ada)
         sendToArduino("STOP");
     }
@@ -135,6 +175,12 @@ async function startCamera() {
         video.srcObject = stream;
         video.setAttribute("playsinline", true);
         await video.play();
+
+        // ensure overlay element is on top of video by making parent relative (HTML/CSS must have .video-box { position: relative; })
+        if (scannerOverlay) {
+            // hide by default until updateOverlayState decides
+            scannerOverlay.style.display = "none";
+        }
         return true;
     } catch (err) {
         console.error("Gagal akses kamera:", err);
@@ -164,6 +210,9 @@ function scanQR() {
         return;
     }
 
+    // Update overlay according to state each frame (cheap guard avoids repeated DOM writes)
+    updateOverlayState();
+
     const canvas = document.getElementById("qr-canvas") || document.createElement("canvas");
     // ensure canvas element exists in DOM for debugging (we have hidden canvas id in HTML)
     canvas.width = video.videoWidth || 640;
@@ -178,11 +227,26 @@ function scanQR() {
         return;
     }
 
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    const qr = jsQR(imageData.data, canvas.width, canvas.height);
+    let imageData;
+    try {
+        imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    } catch (e) {
+        // security or other issues reading the frame
+        console.warn("Tidak boleh baca imageData:", e);
+        requestAnimationFrame(scanQR);
+        return;
+    }
+
+    // decode QR using jsQR
+    let qr = null;
+    try {
+        qr = jsQR(imageData.data, canvas.width, canvas.height);
+    } catch (e) {
+        console.error("jsQR error:", e);
+    }
 
     if (!scanning && qr) {
-        const raw = qr.data.trim().toLowerCase(); //semua source nama fail mesti lowercase -debug 12 dec
+        const raw = (qr.data || "").trim().toLowerCase(); // semua source nama fail mesti lowercase
 
         // ANTI-SPAM COOLDOWN
         const now = Date.now();
@@ -195,24 +259,26 @@ function scanQR() {
 
         // SEMAK QR SAH
         if (validQRImages.includes(raw)) {
-            const fullQRPath = QR_PATH + raw + ".png"; // TUKAR ikut format QR/BARCODE/RFID?
+            const fullQRPath = QR_PATH + raw + ".png";
             console.log("QR image path:", fullQRPath);
 
-            scanning = true;
+            scanning = true; // lock scanning while we handle this QR
             statusText.innerHTML = `QR dikesan: <b>${raw}</b> (sah)`;
+
+            // Hide overlay immediately while handling (Choice C behaviour)
+            hideOverlay();
 
             // Bunyi scan berjaya (nak pakai, keluarkan komen pada audio file)
             // scanSound.currentTime = 0;
             // scanSound.play();
 
-            // tambah masa
+            // tambah masa (bonus)
             timer += 5;
             if (timer > 30) timer = 30;
 
             // bonusSound.play();
 
             startTimer(raw);
-
         } else {
             statusText.textContent = "QR dikesan tetapi TIDAK sah.";
 
@@ -261,7 +327,7 @@ function calculateScore(rockName) {
     clearInterval(timerInterval);
 
     const used = 30 - timer;
-    const score = Math.max(1, Math.min(10, 10 - Math.floor(used / 3)));
+    const score = Math.max(1, Math.min(10, 10 - Math.floor(used / 3))));
 
     scoreBox.textContent = score;
 
@@ -277,8 +343,12 @@ function calculateScore(rockName) {
         scanning = false;
         timer = 30;
 
+        // Clear last QR (so same QR can be scanned again later)
         lastQR = "";
         lastQRTime = 0;
+
+        // Resume overlay (Choice C: overlay visible when no QR detected)
+        updateOverlayState();
 
     }, 3000);
 }
