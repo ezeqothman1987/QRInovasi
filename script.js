@@ -1,27 +1,23 @@
 /* ============================================================
-   GeoQuiz QR – SCRIPT.JS (VERSI DIBETULKAN)
+   GeoQuiz QR – SCRIPT.JS | Versi Stabil
    ============================================================ */
 
 /* ============================================================
-   1) SENARAI QR SAH (guna nama fail tanpa extension dlm qr_images)
+   1) SENARAI QR (guna nama fail tanpa extension)
    ============================================================ */
 const QR_PATH = "static/qr_images/";
-
-/* Akan auto-load ikut nama fail dalam folder: (OPTIONAL)
-   Buat manual dulu:
-*/
 const validQRImages = ["granite", "gneiss"];
 
 /* ============================================================
-   2) KATEGORI BATU
+   2) KATEGORI
    ============================================================ */
 const rockCategory = {
     granite: "Igneus",
-    gneiss: "Metamorf",
+    gneiss: "Metamorf"
 };
 
 /* ============================================================
-   3) PULL ELEMEN HTML
+   3) GET ELEMENTS
    ============================================================ */
 const video = document.getElementById("video");
 const statusText = document.getElementById("cameraStatus");
@@ -31,66 +27,45 @@ const rockNameBox = document.getElementById("rockName");
 const startBtn = document.getElementById("startScanBtn");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 const scannerOverlay = document.getElementById("scannerOverlay");
+
 const qrCanvas = document.getElementById("qr-canvas");
 const qrCtx = qrCanvas.getContext("2d");
 
 /* ============================================================
-   4) SETTING GLOBAL
+   4) GLOBAL VARIABLES
    ============================================================ */
 let stream = null;
-let scanning = false;        // sedang proses 1 QR
-let scanningActive = false;  // kamera menyala & scan loop aktif
+let scanningActive = false;
+let scanning = false;
 let timer = 30;
 let timerInterval = null;
 
-/* ============================================================
-   6) ANTI-SPAM QR
-   ============================================================ */
+/* Anti Spam QR */
 let lastQR = "";
 let lastQRTime = 0;
 const QR_COOLDOWN = 3000;
 
 /* ============================================================
-   8) FULLSCREEN BUTTON
+   Fullscreen
    ============================================================ */
-fullscreenBtn?.addEventListener("click", () => {
+fullscreenBtn.addEventListener("click", () => {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen();
     else document.exitFullscreen();
 });
 
 /* ============================================================
-   OVERLAY CONTROL
+   START / STOP GAME
    ============================================================ */
-function showOverlay() {
-    scannerOverlay.style.display = "block";
-}
-function hideOverlay() {
-    scannerOverlay.style.display = "none";
-}
-function updateOverlayState() {
-    if (!scanningActive) {
-        hideOverlay();
-        return;
-    }
-    if (!scanning) showOverlay();
-    else hideOverlay();
-}
+startBtn.addEventListener("click", async () => {
 
-/* ============================================================
-   9) START / STOP GAME
-   ============================================================ */
-startBtn?.addEventListener("click", async () => {
-
-    /* =========================
-       START GAME
-       ========================= */
+    /* START GAME */
     if (!scanningActive) {
+
         const ok = await startCamera();
         if (!ok) return;
 
         if (typeof jsQR !== "function") {
-            statusText.textContent = "Ralat: jsQR tidak ditemui.";
-            stopCamera();
+            statusText.textContent = "Ralat jsQR tidak ditemui.";
             return;
         }
 
@@ -98,40 +73,40 @@ startBtn?.addEventListener("click", async () => {
         scanning = false;
 
         startBtn.textContent = "■ Tamat Permainan";
-        statusText.textContent = "Kamera diaktifkan. Sedia untuk scan.";
+        statusText.textContent = "Kamera aktif. Sedia scan.";
+
         timerText.textContent = "-";
-        scoreBox.textContent = "0";
         rockNameBox.textContent = "–";
+        scoreBox.textContent = "0";
 
-        updateOverlayState();
+        scannerOverlay.style.display = "block";
 
-        requestAnimationFrame(scanQR);   // hanya mula scan selepas kamera start
-
+        requestAnimationFrame(scanQR);
         return;
     }
 
-    /* =========================
-       STOP GAME
-       ========================= */
+    /* STOP GAME */
     scanningActive = false;
     scanning = false;
-
     startBtn.textContent = "🎮 Mula Bermain";
     statusText.textContent = "Permainan dihentikan.";
 
-    stopCamera();
-
     clearInterval(timerInterval);
     timerText.textContent = "-";
-    scoreBox.textContent = "0";
     rockNameBox.textContent = "–";
-    updateOverlayState();
+    scoreBox.textContent = "0";
+
+    scannerOverlay.style.display = "none";
+    stopCamera();
 });
 
 /* ============================================================
-   10) START CAMERA
+   CAMERA CONTROL
    ============================================================ */
 async function startCamera() {
+
+    if (stream) return true; // kalau sudah ON, jangan ON lagi
+
     try {
         stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: "environment" },
@@ -140,20 +115,17 @@ async function startCamera() {
 
         video.srcObject = stream;
         video.setAttribute("playsinline", true);
-        await video.play();
 
+        await video.play();
         return true;
 
     } catch (err) {
-        statusText.textContent = "Gagal mengakses kamera.";
+        statusText.textContent = "Gagal akses kamera.";
         console.error(err);
         return false;
     }
 }
 
-/* ============================================================
-   11) STOP CAMERA
-   ============================================================ */
 function stopCamera() {
     if (stream) {
         stream.getTracks().forEach(t => t.stop());
@@ -163,34 +135,30 @@ function stopCamera() {
 }
 
 /* ============================================================
-   12) SCAN QR LOOP
+   SCAN QR LOOP
    ============================================================ */
 function scanQR() {
-    if (!scanningActive) return;  // pastikan scan tak berjalan jika game stop
 
-    updateOverlayState();
+    if (!scanningActive) return;
 
     if (video.readyState !== video.HAVE_ENOUGH_DATA) {
         requestAnimationFrame(scanQR);
         return;
     }
 
-    // setup canvas
     qrCanvas.width = video.videoWidth;
     qrCanvas.height = video.videoHeight;
 
     qrCtx.drawImage(video, 0, 0, qrCanvas.width, qrCanvas.height);
 
     let imgData = qrCtx.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
-
     let qr = jsQR(imgData.data, qrCanvas.width, qrCanvas.height);
 
     if (!scanning && qr) {
-
         const raw = qr.data.trim().toLowerCase();
         const now = Date.now();
 
-        // Anti spam
+        /* ANTI-SPAM */
         if (raw === lastQR && now - lastQRTime < QR_COOLDOWN) {
             requestAnimationFrame(scanQR);
             return;
@@ -200,14 +168,9 @@ function scanQR() {
         lastQRTime = now;
 
         if (validQRImages.includes(raw)) {
-
-            scanning = true;   // block QR lain
-            hideOverlay();
-
+            scanning = true;
             statusText.innerHTML = `QR dikesan: <b>${raw}</b>`;
-
             startTimer(raw);
-
         } else {
             statusText.textContent = "QR tidak sah.";
         }
@@ -217,16 +180,18 @@ function scanQR() {
 }
 
 /* ============================================================
-   13) TIMER
+   TIMER
    ============================================================ */
 function startTimer(rockName) {
+
     timer = 30;
     timerText.textContent = timer;
+
     rockNameBox.textContent = rockNameMapping(rockName);
 
     clearInterval(timerInterval);
-
     timerInterval = setInterval(() => {
+
         timer--;
         timerText.textContent = timer;
 
@@ -234,20 +199,21 @@ function startTimer(rockName) {
             clearInterval(timerInterval);
             calculateScore(rockName);
         }
+
     }, 1000);
 }
 
 function rockNameMapping(raw) {
-    if (!raw) return "–";
-    return rockCategory[raw] ?
-        `${raw} — ${rockCategory[raw]}` :
-        raw;
+    return rockCategory[raw]
+        ? `${raw} — ${rockCategory[raw]}`
+        : raw;
 }
 
 /* ============================================================
-   14) KIRA SKOR
+   SCORE
    ============================================================ */
 function calculateScore(rockName) {
+
     clearInterval(timerInterval);
 
     const used = 30 - timer;
@@ -256,30 +222,30 @@ function calculateScore(rockName) {
     scoreBox.textContent = score;
 
     setTimeout(() => {
+
         statusText.textContent = "Sedia scan seterusnya.";
         timerText.textContent = "-";
         scoreBox.textContent = "0";
-        scanning = false;  // buka semula untuk QR seterusnya
-        timer = 30;
+        scanning = false;
 
         lastQR = "";
         lastQRTime = 0;
 
-        updateOverlayState();
+        timer = 30;
+
     }, 3000);
 }
 
 /* ============================================================
-   17) HALL OF FAME
+   HALL OF FAME
    ============================================================ */
 function saveHallOfFame() {
-    const nameEl = document.getElementById("playerName");
-    const finalScore = document.getElementById("finalScore");
-    const name = nameEl?.value || "Tanpa Nama";
-    const score = parseInt(finalScore?.textContent || "0");
+    const name = document.getElementById("playerName").value || "Tanpa Nama";
+    const score = parseInt(document.getElementById("finalScore").textContent || "0");
 
     const rec = { name, score, date: new Date().toISOString() };
     const arr = JSON.parse(localStorage.getItem("hof") || "[]");
+
     arr.push(rec);
     localStorage.setItem("hof", JSON.stringify(arr));
 
@@ -288,17 +254,14 @@ function saveHallOfFame() {
 
 function loadHallOfFame() {
     const list = document.getElementById("hofList");
-    if (!list) return;
-
     list.innerHTML = "";
+
     const arr = JSON.parse(localStorage.getItem("hof") || "[]")
         .sort((a, b) => b.score - a.score);
 
     arr.forEach((r, i) => {
         const li = document.createElement("li");
         li.innerHTML = `<b>${i + 1}.</b> ${r.name} — ${r.score}`;
-        li.classList.add("hof-item");
-        if (i === 0) li.classList.add("top-score");
         list.appendChild(li);
     });
 }
