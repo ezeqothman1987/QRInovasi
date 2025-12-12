@@ -177,7 +177,7 @@ async function startCamera(){
         video.setAttribute("playsinline", true);
         video.muted = true;
         await video.play();
-
+            if (el("cameraStatus")) el("cameraStatus").textContent = "Scanner Diaktifkan";
         scanning = true;
         const overlay = el("scannerOverlay");
         if (overlay) overlay.style.display = "block";
