@@ -256,7 +256,7 @@ function startQuestionTimer(){
         timeRemaining--;
         setText("timer", String(timeRemaining));
         if (timeRemaining <= 0) {
-            safePlay(soundTimeup);
+            soundTimeUp.play().catch(()=>{});
             stopQuestionTimer();
             endGame();
         }
@@ -287,7 +287,7 @@ function playerAnswer(answer){
 
     if (a === lastQR) {
         // correct
-        safePlay(soundCorrect);
+        soundCorrect.play().catch(()=>{});
 
         // compute earned points (proportional)
         let raw = Math.ceil((timeRemaining / ROUND_TIME) * MAX_POINTS);
