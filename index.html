@@ -1,33 +1,54 @@
 <!DOCTYPE html>
 <html lang="ms">
 <head>
+    <!-- ==========================
+         META & PAGE SETTINGS
+         ========================== -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>GeoQuiz QR – Kiosk Edition</title>
+
+    <!-- ==========================
+         STYLESHEET & FAVICON
+         ========================== -->
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="static/qr_images/favicon.png">
 </head>
 <body>
 
-<!-- FULLSCREEN -->
-<div id="fullscreenBtn" style="cursor:pointer;position:fixed;right:12px;top:12px;z-index:1000;">⛶ Fullscreen</div>
+<!-- ==========================
+     FULLSCREEN BUTTON (UI GLOBAL)
+     ========================== -->
+<div id="fullscreenBtn" style="cursor:pointer;position:fixed;right:12px;top:12px;z-index:1000;">
+    ⛶ Fullscreen
+</div>
 
+<!-- ==========================
+     MAIN APP CONTAINER
+     ========================== -->
 <div class="app-container">
 
+    <!-- ==========================
+         TITLE / HEADER
+         ========================== -->
     <h1 class="title">🪨 GEO-QUIZ QR KUMPULAN 1</h1>
 
-    <!-- ARDUINO MODE + CONNECT + START GAME -->
+    <!-- ==========================
+         ARDUINO MODE + START BUTTON
+         ========================== -->
     <div class="arduino-toggle">
         <label><input type="checkbox" id="arduinoMode"> Arduino Mode</label>
         <button id="connectArduinoBtn">Connect Arduino</button>
         <button id="startScanBtn" class="start-btn">🎮 Mula Bermain</button>
     </div>
 
-    <!-- VIDEO FEED CAMERA + CANVAS -->
+    <!-- ==========================
+         CAMERA FEED + SCANNER OVERLAY
+         ========================== -->
     <div class="video-box">
         <video id="video" playsinline muted></video>
 
-        <!-- SCANNER OVERLAY -->
+        <!-- QR Scanner Overlay Graphics -->
         <div class="scanner-overlay" id="scannerOverlay" style="display:none;">
             <div class="scan-area">
                 <div class="scan-line"></div>
@@ -38,14 +59,16 @@
             </div>
         </div>
 
-        <!-- CANVAS QR -->
+        <!-- Canvas for QR Processing -->
         <canvas id="qr-canvas" hidden></canvas>
 
-        <!-- CAMERA STATUS -->
+        <!-- Camera Status Text -->
         <div id="cameraStatus" class="camera-status">Kamera belum diaktifkan.</div>
     </div>
 
-    <!-- PANEL INFO -->
+    <!-- ==========================
+         GAME INFO PANEL (Masa / Markah / Status)
+         ========================== -->
     <div class="info-panel">
         <div class="label">Masa:</div>
         <div id="rockName" class="value">–</div>
@@ -57,15 +80,18 @@
         <div id="score" class="value">0</div>
     </div>
 
-    <!-- BUTANG BETUL / SALAH -->
+    <!-- ==========================
+         ANSWER BUTTONS (BETUL / SALAH)
+         ========================== -->
     <div class="button-panel">
         <button id="btnCorrect" class="cat-btn correct">BETUL</button>
         <button id="btnWrong" class="cat-btn wrong">SALAH</button>
     </div>
-
 </div>
 
-<!-- POPUP TAMAT -->
+<!-- ==========================
+     MODAL TAMAT PERMAINAN
+     ========================== -->
 <div id="endModal" class="modal" style="display:none;">
     <div class="modal-content">
         <h2>Tamat Permainan!</h2>
@@ -77,9 +103,9 @@
     </div>
 </div>
 
-<!-- ==========================================
-     HALL OF FAME — PAPARAN NAMA & SIMPAN
-=========================================== -->
+<!-- ==========================
+     HALL OF FAME SCREEN
+     ========================== -->
 <div id="hallOfFameScreen" style="display:none; text-align:center; padding:20px;">
     <h2>Markah Akhir: <span id="finalScore">0</span></h2>
 
@@ -93,19 +119,24 @@
     </button>
 </div>
 
-<!--Code selepas ni TAK BOLEH DIHILANGKAN -->
+<!-- ==================================================================================
+     ** WAJIB KEKAL ** → LOAD HALL OF FAME DARI localStorage SEBELUM SCRIPT LAIN MUAT
+     ================================================================================== -->
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    if (typeof loadHallOfFame === "function") loadHallOfFame();
-});
+    document.addEventListener("DOMContentLoaded", () => {
+        if (typeof loadHallOfFame === "function") loadHallOfFame();
+    });
 </script>
 
-<!-- jsQR WAJIB DIDAHULUKAN -->
+<!-- ==========================
+     JSQR LIBRARY (WAJIB DIDAHULUKAN)
+     ========================== -->
 <script src="jsQR.js"></script>
 
-<!-- SCRIPT GAME -->
+<!-- ==========================
+     MAIN GAME SCRIPT
+     ========================== -->
 <script src="script.js"></script>
 
 </body>
 </html>
-
