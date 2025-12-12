@@ -428,41 +428,86 @@ function loadHallOfFame(){
     });
 }
 
-/* =========================
-   11) Web Serial (Arduino) optional
-   ========================= */
-let serialPort = null;
-let serialReader = null;
-async function connectArduinoSerial(){
+/* ============================================================
+   11) Web Serial (Arduino / ESP32) – OPTIONAL
+   ------------------------------------------------------------
+   Fungsi ini menyambungkan browser ke Arduino/ESP32 melalui USB
+   menggunakan Web Serial API. Ia akan membaca teks seperti:
+     "betul"  → jawapan betul
+     "salah"  → jawapan salah
+   *Ubah format input Arduino di bahagian IF (t === "...").
+============================================================ */
+
+let serialPort = null;      // Port USB selepas disambung
+let serialReader = null;    // Reader untuk membaca data masuk
+
+
+async function connectArduinoSerial() {
+
+    // --------------------------------------------------------
+    // 1) Semak sokongan browser
+    // --------------------------------------------------------
     if (!("serial" in navigator)) {
-        alert("Web Serial API not supported in this browser.");
+        alert("Browser ini tidak menyokong Web Serial API.");
         return;
     }
+
     try {
+        // --------------------------------------------------------
+        // 2) Pilih port USB (browser akan buka popup pilihan)
+        // --------------------------------------------------------
         serialPort = await navigator.serial.requestPort();
+
+        // --------------------------------------------------------
+        // 3) Buka port USB
+        //    ⚠️ Tukar baudRate jika Arduino guna nilai lain.
+        // --------------------------------------------------------
         await serialPort.open({ baudRate: 115200 });
+
+        // Decoder: terima data ASCII → jadi text biasa
         const decoder = new TextDecoderStream();
         serialPort.readable.pipeTo(decoder.writable);
         serialReader = decoder.readable.getReader();
 
-        (async ()=> {
+
+        // --------------------------------------------------------
+        // 4) Loop baca data dari Arduino/ESP32
+        // --------------------------------------------------------
+        (async () => {
             while (true) {
+
                 const { value, done } = await serialReader.read();
                 if (done) break;
                 if (!value) continue;
+
+                // Kadang Arduino hantar banyak line dalam satu batch
                 value.split(/\r?\n/).forEach(line => {
+
                     const t = line.trim().toLowerCase();
+                    if (!t) return;
+
+                    // ----------------------------------------------------
+                    // 5) Tukar format input di sini jika Arduino hantar
+                    //    mesej lain seperti "OK" atau "BTN_A".
+                    //
+                    // Contoh:
+                    // if (t === "ok") playerAnswer("betul");
+                    // if (t === "no") playerAnswer("salah");
+                    // ----------------------------------------------------
                     if (t === "betul" || t === "salah") {
                         playerAnswer(t);
                     }
+
                 });
             }
         })();
+
     } catch (e) {
-        console.error("Serial connect failed:", e);
-        alert("Gagal sambung ke Arduino/ESP32.");
+        console.error("Serial connection failed:", e);
+        alert("Gagal menyambung ke Arduino/ESP32.");
     }
 }
+
 
 /* =========================
    12) INIT
