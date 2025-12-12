@@ -25,20 +25,22 @@
     <!-- VIDEO FEED CAMERA + CANVAS UNTUK SCAN QR -->
     <div class="video-box">
         <video id="video" autoplay playsinline></video>
-    <div class="scanner-overlay">
-        <div class="scan-area">
-            <div class="scan-line"></div>
-            <div class="scan-corner top-left"></div>
-            <div class="scan-corner top-right"></div>
-            <div class="scan-corner bottom-left"></div>
-            <div class="scan-corner bottom-right"></div>
-        </div>
-    </div>
 
-        <!-- Digunakan jsQR untuk membaca frame kamera -->
+        <!-- ANIMASI SCAN QR -->
+        <div class="scanner-overlay" id="scannerOverlay">
+            <div class="scan-area">
+                <div class="scan-line"></div>
+                <div class="scan-corner top-left"></div>
+                <div class="scan-corner top-right"></div>
+                <div class="scan-corner bottom-left"></div>
+                <div class="scan-corner bottom-right"></div>
+            </div>
+        </div>
+
+        <!-- jsQR akan baca imej dari canvas -->
         <canvas id="qr-canvas" hidden></canvas>
 
-        <!-- Status kamera QR / mesej error -->
+        <!-- Status kamera -->
         <div id="cameraStatus" class="camera-status">Kamera belum diaktifkan.</div>
     </div>
 
@@ -81,13 +83,3 @@
     <div class="hof-box">
         <h2>🏆 Hall of Fame</h2>
         <ul id="hofList"></ul>
-    </div>
-</div>
-
-  <!-- Pilihan CDN (cepat) -->
-  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-
-  <!-- Script utama anda (pastikan nama/path betul) -->
-  <script src="script.js"></script>
-</body>
-</html>
