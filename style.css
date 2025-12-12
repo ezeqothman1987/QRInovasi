@@ -58,7 +58,7 @@ body {
    ============================================================ */
 .video-box {
     position: relative;
-    width: 100%;
+    width: 90%;
     max-width: 600px;
     margin: 20px auto;
     border-radius: 15px;
@@ -68,7 +68,7 @@ body {
 }
 
 #video {
-    width: 100%;
+    width: 90%;
     height: auto;
     background: #000;
 }
@@ -94,7 +94,7 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
+    width: 85%;
     height: 3px;
     background: #6f6;
     animation: scanMove 2s infinite linear;
@@ -110,7 +110,7 @@ body {
    ============================================================ */
 .info-panel {
     margin: 15px auto 0;
-    width: 92%;
+    width: 90%;
     max-width: 480px;
     background: rgba(255,255,255,0.08);
     backdrop-filter: blur(6px);
