@@ -72,6 +72,8 @@ let timeRemaining = 0;
 let questionInterval = null;
 let pausedUntilNextQR = false; // after correct answer, countdown paused until next QR
 let qrDebounce = false;       // short debounce to avoid duplicate scans
+let isCooldown = false;   //cooldown sebelum newQR scan
+
 
 /* =========================
    04) UI INIT
@@ -230,6 +232,19 @@ function processScannedQR(payload){
     if (txt !== "betul" && txt !== "salah") {
         console.log("Unrecognized QR payload (expect 'betul'/'salah'):", txt);
         return;
+   // Kalau masih dalam cooldown, jangan baca QR baru
+    if (isCooldown) return;
+
+    if (qrData !== lastQR) {
+        lastQR = qrData;
+        startQuestionTimer();
+    }
+
+    // Aktifkan cooldown 3 saat
+    isCooldown = true;
+    setTimeout(() => {
+        isCooldown = false;
+    }, 2000); // 2000 ms = 2 saat
     }
 
     lastQR = txt;
