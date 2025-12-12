@@ -25,6 +25,15 @@
     <!-- VIDEO FEED CAMERA + CANVAS UNTUK SCAN QR -->
     <div class="video-box">
         <video id="video" autoplay playsinline></video>
+    <div class="scanner-overlay">
+        <div class="scan-area">
+            <div class="scan-line"></div>
+            <div class="scan-corner top-left"></div>
+            <div class="scan-corner top-right"></div>
+            <div class="scan-corner bottom-left"></div>
+            <div class="scan-corner bottom-right"></div>
+        </div>
+    </div>
 
         <!-- Digunakan jsQR untuk membaca frame kamera -->
         <canvas id="qr-canvas" hidden></canvas>
