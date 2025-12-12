@@ -24,7 +24,7 @@
 
     <!-- VIDEO FEED CAMERA + CANVAS UNTUK SCAN QR -->
     <div class="video-box">
-        <video id="video" autoplay playsinline></video>
+        <video id="video" playsinline></video>
 
         <!-- ANIMASI SCAN QR -->
         <div class="scanner-overlay" id="scannerOverlay">
@@ -37,10 +37,8 @@
             </div>
         </div>
 
-        <!-- jsQR akan baca imej dari canvas -->
         <canvas id="qr-canvas" hidden></canvas>
 
-        <!-- Status kamera -->
         <div id="cameraStatus" class="camera-status">Kamera belum diaktifkan.</div>
     </div>
 
@@ -78,8 +76,22 @@
     </div>
 </div>
 
-<!-- HALL OF FAME (LOCALSTORAGE) -->
+<!-- HALL OF FAME -->
 <div class="sidebar">
     <div class="hof-box">
         <h2>🏆 Hall of Fame</h2>
         <ul id="hofList"></ul>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    if (typeof loadHallOfFame === "function") loadHallOfFame();
+});
+</script>
+
+<script src="script.js"></script>
+<script src="jsQR.js"></script>
+
+</body>
+</html>
