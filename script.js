@@ -15,19 +15,6 @@ const validQRImages = ["granite", "gneiss"];
 const rockCategory = {
     granite: "Igneus",
     gneiss: "Metamorf",
-    batu3: "Sedimen",
-    batu4: "Sedimen",
-    batu5: "Metamorf",
-    batu6: "Metamorf",
-    batu7: "Mineral",
-    batu8: "Igneus",
-    batu9: "Sedimen",
-    batu10: "Metamorf",
-    batu11: "Mineral",
-    batu12: "Igneus",
-    batu13: "Sedimen",
-    batu14: "Metamorf",
-    batu15: "Mineral"
 };
 
 /* ============================================================
