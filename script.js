@@ -1,178 +1,109 @@
 /* ============================================================
-   GeoQuiz QR – SCRIPT.JS | Versi Stabil
+   0) GLOBAL VARIABLES + ANTI-SPAM SETTINGS
    ============================================================ */
+let video = null;
+let canvas = null;
+let ctx = null;
 
-/* ============================================================
-   1) SENARAI QR (guna nama fail tanpa extension)
-   ============================================================ */
-const QR_PATH = "static/qr_images/";
-const validQRImages = ["granite", "gneiss"];
-
-/* ============================================================
-   2) KATEGORI
-   ============================================================ */
-const rockCategory = {
-    granite: "Igneus",
-    gneiss: "Metamorf"
-};
-
-/* ============================================================
-   3) GET ELEMENTS
-   ============================================================ */
-const video = document.getElementById("video");
-const statusText = document.getElementById("cameraStatus");
-const timerText = document.getElementById("timer");
-const scoreBox = document.getElementById("score");
-const rockNameBox = document.getElementById("rockName");
-const startBtn = document.getElementById("startScanBtn");
-const fullscreenBtn = document.getElementById("fullscreenBtn");
-const scannerOverlay = document.getElementById("scannerOverlay");
-
-const qrCanvas = document.getElementById("qr-canvas");
-const qrCtx = qrCanvas.getContext("2d", { willReadFrequently: true });
-
-/* ============================================================
-   4) GLOBAL VARIABLES
-   ============================================================ */
-let stream = null;
-let scanningActive = false;
 let scanning = false;
-let timer = 30;
 let timerInterval = null;
 
-/* Anti Spam QR */
-let lastQR = "";
-let lastQRTime = 0;
-const QR_COOLDOWN = 3000;
+let timeLeft = 30;
+let score = 0;
+
+let currentQR = "";
+let lastScannedQR = "";
+let qrCooldown = false;
+
+const QR_PATH = "static/qr_images/";
+let validQRImages = [];
 
 /* ============================================================
-   Fullscreen
+   1) LOAD QR LIST BY AUTO-SCANNING FOLDER (GitHub Pages limitation)
    ============================================================ */
-fullscreenBtn.addEventListener("click", () => {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-    else document.exitFullscreen();
-});
+async function loadQRList() {
+    try {
+        const res = await fetch(QR_PATH);
+        const html = await res.text();
 
-/* ============================================================
-   START / STOP GAME
-   ============================================================ */
-startBtn.addEventListener("click", async () => {
+        const regex = /href="([^"]+\.(png|jpg|jpeg|webp))"/gi;
+        let match;
 
-    /* START GAME */
-    if (!scanningActive) {
+        validQRImages = [];
 
-        const ok = await startCamera();
-        if (!ok) return;
+        while ((match = regex.exec(html))) {
+            const fileName = match[1]
+                .replace(/\.(png|jpg|jpeg|webp)$/i, "")
+                .toLowerCase();
 
-        if (typeof jsQR !== "function") {
-            statusText.textContent = "Ralat jsQR tidak ditemui.";
-            return;
+            validQRImages.push(fileName);
         }
 
-        scanningActive = true;
-        scanning = false;
-
-        startBtn.textContent = "■ Tamat Permainan";
-        statusText.textContent = "Kamera aktif. Sedia scan.";
-
-        timerText.textContent = "-";
-        rockNameBox.textContent = "–";
-        scoreBox.textContent = "0";
-
-        scannerOverlay.style.display = "block";
-
-        requestAnimationFrame(scanQR);
-        return;
+        console.log("QR list loaded:", validQRImages);
+    } catch (err) {
+        console.error("⚠ Gagal load senarai QR:", err);
     }
-
-    /* STOP GAME */
-    scanningActive = false;
-    scanning = false;
-    startBtn.textContent = "🎮 Mula Bermain";
-    statusText.textContent = "Permainan dihentikan.";
-
-    clearInterval(timerInterval);
-    timerText.textContent = "-";
-    rockNameBox.textContent = "–";
-    scoreBox.textContent = "0";
-
-    scannerOverlay.style.display = "none";
-    stopCamera();
-});
+}
 
 /* ============================================================
-   CAMERA CONTROL
+   2) START CAMERA ONLY WHEN CLICK START
    ============================================================ */
 async function startCamera() {
-
-    if (stream) return true; // kalau sudah ON, jangan ON lagi
+    video = document.getElementById("video");
+    canvas = document.getElementById("qr-canvas");
+    ctx = canvas.getContext("2d", { willReadFrequently: true });
 
     try {
-        stream = await navigator.mediaDevices.getUserMedia({
+        const stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: "environment" },
-            audio: false
         });
 
         video.srcObject = stream;
-        video.setAttribute("playsinline", true);
 
-        await video.play();
-        return true;
+        video.onloadedmetadata = () => {
+            video.play();
+            scanning = true;
+            scanQR();
+        };
 
+        document.getElementById("cameraStatus").innerText = "Kamera aktif.";
     } catch (err) {
-        statusText.textContent = "Gagal akses kamera.";
-        console.error(err);
-        return false;
+        console.error("Camera error:", err);
+        document.getElementById("cameraStatus").innerText = "Gagal buka kamera.";
     }
-}
-
-function stopCamera() {
-    if (stream) {
-        stream.getTracks().forEach(t => t.stop());
-        stream = null;
-    }
-    video.srcObject = null;
 }
 
 /* ============================================================
-   SCAN QR LOOP
+   3) AUTO SCAN QR WITH ANTI-SPAM
    ============================================================ */
 function scanQR() {
+    if (!scanning) return;
 
-    if (!scanningActive) return;
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
 
-    if (video.readyState !== video.HAVE_ENOUGH_DATA) {
-        requestAnimationFrame(scanQR);
-        return;
-    }
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    qrCanvas.width = video.videoWidth;
-    qrCanvas.height = video.videoHeight;
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, canvas.width, canvas.height);
 
-    qrCtx.drawImage(video, 0, 0, qrCanvas.width, qrCanvas.height);
+        if (code) {
+            const qrText = code.data.trim().toLowerCase();
 
-    let imgData = qrCtx.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
-    let qr = jsQR(imgData.data, qrCanvas.width, qrCanvas.height);
+            // === ANTI-SPAM QR ===
+            if (qrCooldown) return;
+            if (qrText === lastScannedQR) return;
 
-    if (!scanning && qr) {
-        const raw = qr.data.trim().toLowerCase();
-        const now = Date.now();
+            lastScannedQR = qrText;
+            qrCooldown = true;
 
-        /* ANTI-SPAM */
-        if (raw === lastQR && now - lastQRTime < QR_COOLDOWN) {
-            requestAnimationFrame(scanQR);
-            return;
-        }
+            // RELEASE COOLDOWN after 1.5s
+            setTimeout(() => { 
+                qrCooldown = false; 
+            }, 1500);
 
-        lastQR = raw;
-        lastQRTime = now;
-
-        if (validQRImages.includes(raw)) {
-            scanning = true;
-            statusText.innerHTML = `QR dikesan: <b>${raw}</b>`;
-            startTimer(raw);
-        } else {
-            statusText.textContent = "QR tidak sah.";
+            handleQR(qrText);
         }
     }
 
@@ -180,88 +111,141 @@ function scanQR() {
 }
 
 /* ============================================================
-   TIMER
+   4) PROCESS SCANNED QR
    ============================================================ */
-function startTimer(rockName) {
+function handleQR(qrText) {
+    console.log("QR scanned:", qrText);
 
-    timer = 30;
-    timerText.textContent = timer;
+    if (!validQRImages.includes(qrText)) {
+        document.getElementById("rockName").innerText = "QR Tidak Dikenali!";
+        return;
+    }
 
-    rockNameBox.textContent = rockNameMapping(rockName);
+    document.getElementById("rockName").innerText = qrText;
+    currentQR = qrText;
+}
 
-    clearInterval(timerInterval);
+/* ============================================================
+   5) CATEGORY BUTTONS
+   ============================================================ */
+function chooseCategory(cat) {
+    if (!currentQR) return;
+
+    const typeCorrect = {
+        granite: "igneous",
+        gneiss: "metamorphic",
+        sandstone: "sedimentary",
+        basalt: "igneous",
+        schist: "metamorphic",
+    };
+
+    if (typeCorrect[currentQR] === cat) {
+        score += 10;
+        timeLeft += 3;
+        document.getElementById("score").innerText = score;
+    } else {
+        timeLeft -= 3;
+    }
+
+    // reset for next QR
+    currentQR = "";
+    document.getElementById("rockName").innerText = "–";
+}
+
+/* ============================================================
+   6) GAME TIMER
+   ============================================================ */
+function startTimer() {
+    timeLeft = 30;
+    document.getElementById("timer").innerText = timeLeft + "s";
+
     timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").innerText = timeLeft + "s";
 
-        timer--;
-        timerText.textContent = timer;
-
-        if (timer <= 0) {
-            clearInterval(timerInterval);
-            calculateScore(rockName);
+        if (timeLeft <= 0) {
+            endGame();
         }
-
     }, 1000);
 }
 
-function rockNameMapping(raw) {
-    return rockCategory[raw]
-        ? `${raw} — ${rockCategory[raw]}`
-        : raw;
-}
+/* ============================================================
+   7) START GAME
+   ============================================================ */
+document.getElementById("startScanBtn").addEventListener("click", async () => {
+
+    await loadQRList();
+    await startCamera();
+    startTimer();
+
+    currentQR = "";
+    lastScannedQR = "";
+    qrCooldown = false;
+
+    score = 0;
+    document.getElementById("score").innerText = "0";
+
+    document.getElementById("rockName").innerText = "–";
+});
 
 /* ============================================================
-   SCORE
+   8) END GAME
    ============================================================ */
-function calculateScore(rockName) {
-
+function endGame() {
+    scanning = false;
     clearInterval(timerInterval);
 
-    const used = 30 - timer;
-    const score = Math.max(1, Math.min(10, 10 - Math.floor(used / 3)));
-
-    scoreBox.textContent = score;
-
-    setTimeout(() => {
-
-        statusText.textContent = "Sedia scan seterusnya.";
-        timerText.textContent = "-";
-        scoreBox.textContent = "0";
-        scanning = false;
-
-        lastQR = "";
-        lastQRTime = 0;
-
-        timer = 30;
-
-    }, 3000);
+    document.getElementById("finalScore").innerText = score;
+    document.getElementById("endModal").style.display = "block";
 }
 
 /* ============================================================
-   HALL OF FAME
+   9) RESET GAME
+   ============================================================ */
+function resetGame() {
+    document.getElementById("endModal").style.display = "none";
+}
+
+/* ============================================================
+   10) HALL OF FAME SYSTEM
    ============================================================ */
 function saveHallOfFame() {
-    const name = document.getElementById("playerName").value || "Tanpa Nama";
-    const score = parseInt(document.getElementById("finalScore").textContent || "0");
+    const nameEl = document.getElementById("playerName");
+    if (!nameEl.value.trim()) return;
 
-    const rec = { name, score, date: new Date().toISOString() };
-    const arr = JSON.parse(localStorage.getItem("hof") || "[]");
+    const entry = {
+        name: nameEl.value,
+        score,
+        date: new Date().toLocaleString(),
+    };
 
-    arr.push(rec);
-    localStorage.setItem("hof", JSON.stringify(arr));
+    let hall = JSON.parse(localStorage.getItem("hof") || "[]");
+    hall.push(entry);
+
+    hall.sort((a, b) => b.score - a.score);
+    hall = hall.slice(0, 20);
+
+    localStorage.setItem("hof", JSON.stringify(hall));
 
     loadHallOfFame();
 }
 
 function loadHallOfFame() {
+    let hall = JSON.parse(localStorage.getItem("hof") || "[]");
+
     const list = document.getElementById("hofList");
     list.innerHTML = "";
 
-    const arr = JSON.parse(localStorage.getItem("hof") || "[]")
-        .sort((a, b) => b.score - a.score);
-
-    arr.forEach((r, i) => {
+    hall.forEach((h) => {
         const li = document.createElement("li");
-        li.innerHTML = `<b>${i + 1}.</b> ${r.name} — ${r.score}`;
+        li.textContent = `${h.name} – ${h.score}`;
         list.appendChild(li);
     });
 }
+
+/* ============================================================
+   11) INIT ON LOAD
+   ============================================================ */
+document.addEventListener("DOMContentLoaded", () => {
+    loadHallOfFame();
+});
