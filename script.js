@@ -104,8 +104,8 @@ function handleQR(payload) {
         return;
     }
 
-    // papar nama batuan di UI
-    document.getElementById("rockName").textContent = currentPayload.toUpperCase();
+    // PAPAR TEKS
+    document.getElementById("rockName").textContent = "Sila Jawab";
 
     awaitingAnswer = true;
     startTimer();
