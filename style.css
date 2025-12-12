@@ -6,8 +6,6 @@
 
 /* ============================================================
    0) GLOBAL THEME & BASE FONT
-   - Warna background
-   - Gaya tulisan
    ============================================================ */
 body {
     margin: 0;
@@ -27,11 +25,8 @@ h1 {
 }
 
 
-
-
 /* ============================================================
    1) CAMERA BOX
-   - Kotak kamera + frame + info status
    ============================================================ */
 .video-box {
     margin: 20px auto 12px;
@@ -60,13 +55,8 @@ h1 {
 }
 
 
-
-
 /* ============================================================
    2) QR SCANNER OVERLAY
-   - Kotak imbasan
-   - Garisan bergerak
-   - Penanda sudut
    ============================================================ */
 .scanner-overlay {
     position: absolute;
@@ -88,7 +78,6 @@ h1 {
     box-shadow: 0 0 20px rgba(0,255,0,0.3);
 }
 
-/* Garisan bergerak merah */
 .scan-line {
     position: absolute;
     top: 0;
@@ -103,7 +92,6 @@ h1 {
     100% { top: 100%; }
 }
 
-/* Sudut hijau */
 .scan-corner {
     position: absolute;
     width: 30px;
@@ -117,10 +105,8 @@ h1 {
 .bottom-right { bottom: -2px; right: -2px; border-left: none; border-top: none; }
 
 
-
-
 /* ============================================================
-   3) INFO PANEL (Score / Masa / Pusingan)
+   3) INFO PANEL
    ============================================================ */
 .info-panel {
     margin: 15px auto 0;
@@ -131,8 +117,6 @@ h1 {
     padding: 18px 14px;
     border-radius: 16px;
     border: 2px solid rgba(180,200,160,0.2);
-
-    /* Glow luar & dalam */
     box-shadow: inset 0 0 12px rgba(0,0,0,0.4),
                 0 0 16px rgba(160,200,130,0.18);
 
@@ -155,10 +139,8 @@ h1 {
 }
 
 
-
-
 /* ============================================================
-   4) BUTTON PANEL (Kategori Jawapan)
+   4) BUTTON PANEL (BETUL / SALAH)
    ============================================================ */
 .button-panel {
     margin: 25px auto 0;
@@ -169,32 +151,35 @@ h1 {
     gap: 16px;
 }
 
-/* Butang kategori */
+/* Asas untuk semua butang */
 .cat-btn {
     padding: 18px;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
     border-radius: 14px;
     cursor: pointer;
     border: none;
     color: #fff;
     transition: 0.15s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 
-/* Warna kategori */
-.ig { background: linear-gradient(135deg, #b84c2a, #e0733d); }  /* IGNEUS */
-.sd { background: linear-gradient(135deg, #c0a46c, #e7d39b); }  /* SEDIMEN */
-.mt { background: linear-gradient(135deg, #564f62, #857a9e); }  /* METAMORFIK */
-.mn { background: linear-gradient(135deg, #2d6c50, #4fbf84); }  /* MINERAL */
+/* BUTANG BETUL — tukar warna di sini */
+.cat-btn.correct {
+    background: linear-gradient(135deg, #3dbf4f, #28a63a);
+}
+
+/* BUTANG SALAH — tukar warna di sini */
+.cat-btn.wrong {
+    background: linear-gradient(135deg, #d9534f, #b52b27);
+}
 
 .cat-btn:hover { transform: scale(1.07); }
 .cat-btn:active { transform: scale(0.95); }
 
 
-
-
 /* ============================================================
-   5) START BUTTON (Mula Permainan)
+   5) START BUTTON
    ============================================================ */
 .start-btn {
     background: #4fbf84;
@@ -209,8 +194,6 @@ h1 {
 .start-btn:hover { transform: scale(1.05); }
 
 
-
-
 /* ============================================================
    6) FULLSCREEN BUTTON
    ============================================================ */
@@ -222,10 +205,8 @@ h1 {
 #fullscreenBtn:hover { color: #f1ffe4; }
 
 
-
-
 /* ============================================================
-   7) HALL OF FAME SIDEBAR (Rekod Pemain)
+   7) HALL OF FAME SIDEBAR
    ============================================================ */
 .sidebar {
     position: fixed;
@@ -234,12 +215,10 @@ h1 {
     width: 260px;
     padding: 15px;
     border-radius: 15px;
-
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(6px);
     border: 2px solid rgba(180,200,160,0.3);
     box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-
     z-index: 999;
 }
 
@@ -251,7 +230,6 @@ h1 {
 
 #hofList { list-style: none; padding: 0; margin: 0; }
 
-/* Item rekod */
 .hof-item {
     background: rgba(255,255,255,0.08);
     padding: 10px;
@@ -260,8 +238,6 @@ h1 {
     border: 1px solid rgba(180,200,160,0.25);
     box-shadow: 0 0 8px rgba(0,0,0,0.25);
     font-size: 15px;
-
-    /* Animasi masuk */
     animation: slideIn 0.45s ease forwards;
     opacity: 0;
     transform: translateX(40px);
@@ -272,15 +248,12 @@ h1 {
     to   { opacity: 1; transform: translateX(0); }
 }
 
-/* Item tertinggi */
 .hof-item.top-score {
     border: 2px solid #8cff96;
     background: rgba(120,255,140,0.15);
     box-shadow: 0 0 12px rgba(80,255,120,0.55);
     transform: scale(1.03);
 }
-
-
 
 
 /* ============================================================
@@ -300,10 +273,8 @@ h1 {
 }
 
 
-
-
 /* ============================================================
-   9) OPTIONAL LIGHT THEME (Jika mahu tukar tema)
+   9) OPTIONAL LIGHT THEME
    ============================================================ */
 body.light-theme {
     background: linear-gradient(180deg, #f3f3e8, #eaeada);
@@ -328,12 +299,13 @@ body.light-theme .value {
 }
 
 /* Warna butang tema cerah */
-body.light-theme .ig { background: linear-gradient(135deg, #ff9b7d, #ffb199); }
-body.light-theme .sd { background: linear-gradient(135deg, #f2d28b, #ffe7b1); }
-body.light-theme .mt { background: linear-gradient(135deg, #afa6c3, #d4ccec); }
-body.light-theme .mn { background: linear-gradient(135deg, #6dd8a3, #a0ffd0); }
+body.light-theme .cat-btn.correct {
+    background: linear-gradient(135deg, #6ae885, #47c25d);
+}
 
-
+body.light-theme .cat-btn.wrong {
+    background: linear-gradient(135deg, #ff8a7a, #e55d4b);
+}
 
 
 /* ============================================================
@@ -354,10 +326,8 @@ body.kiosk #fullscreenBtn {
 }
 
 
-
-
 /* ============================================================
-   11) SCAN DETECT FLASH (Sinar Hijau)
+   11) SCAN DETECT FLASH
    ============================================================ */
 .scan-detect {
     animation: scanFlash 0.35s ease-out;
@@ -369,10 +339,8 @@ body.kiosk #fullscreenBtn {
 }
 
 
-
-
 /* ============================================================
-   12) RESPONSIVE (Tablet / Mobile)
+   12) RESPONSIVE
    ============================================================ */
 @media (max-width: 600px) {
     h1 { font-size: 24px; }
