@@ -303,9 +303,19 @@ function playerAnswer(answer){
     }
 
     if (a === lastQR) {
+
+        /* ==========================================
+           FLASH GREEN (JAWAPAN BETUL)
+        ========================================== */
+        const panel = document.querySelector(".button-panel");
+        if (panel) {
+            panel.classList.add("flash-green");
+            setTimeout(() => panel.classList.remove("flash-green"), 350);
+        }
+        /* ========================================== */
+
         // correct: stop timer immediately
         stopQuestionTimer();
-
         safePlay(soundCorrect);
 
         // scoring proportional to timeRemaining
@@ -330,7 +340,19 @@ function playerAnswer(answer){
         if (roundCount >= TOTAL_ROUNDS) {
             setTimeout(()=> endGame(), 600);
         }
+
     } else {
+
+        /* ==========================================
+           FLASH RED (JAWAPAN SALAH)
+        ========================================== */
+        const panel = document.querySelector(".button-panel");
+        if (panel) {
+            panel.classList.add("flash-red");
+            setTimeout(() => panel.classList.remove("flash-red"), 350);
+        }
+        /* ========================================== */
+
         // wrong -> immediate end
         stopQuestionTimer();
         safePlay(soundWrong);
