@@ -108,21 +108,36 @@ body {
 /* ============================================================
    3) INFO PANEL  (KEKAL)
    ============================================================ */
-#infoPanel {
-    margin-top: 15px;
-    padding: 12px 18px;
-    border-radius: 12px;
-
-    /* ✨ Glass effect cantik */
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+.info-panel {
+    margin: 15px auto 0;
+    width: 92%;
+    max-width: 480px;
+    background: rgba(255,255,255,0.08);
     backdrop-filter: blur(6px);
+    padding: 18px 14px;
+    border-radius: 16px;
+    border: 2px solid rgba(180,200,160,0.2);
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.4),
+                0 0 16px rgba(160,200,130,0.18);
 
-    /* Glow sikit */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    color: #e8f9e4;
-    font-size: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 16px;
 }
+
+.label {
+    font-weight: bold;
+    font-size: 16px;
+    color: #e5f2d5;
+}
+
+.value {
+    font-weight: bold;
+    font-size: 28px;
+    color: #d4e5c2;
+    text-shadow: 0 0 6px rgba(180,220,160,0.6);
+}
+
 /* ============================================================
    ANSWER BUTTON PANEL (BETUL / SALAH)
    ============================================================ */
