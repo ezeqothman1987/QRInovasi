@@ -26,24 +26,30 @@ h1 {
 /* footer-info bar below buttons */
 .footer-info {
     width: 100%;
-    max-width: 720px; /* match main container width if perlu */
-    margin: 12px auto 0;
-    background: rgba(0,0,0,0.85);
-    color: #e6f9e6;
     text-align: center;
-    padding: 10px 14px;
-    font-weight: 600;
-    border-radius: 10px;
-    border: 1px solid rgba(180,200,160,0.18);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-    letter-spacing: 0.4px;
-    font-size: 1rem;
+    padding: 12px;
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    font-size: 16px;
+    letter-spacing: 1px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    animation: glowPulse 2.5s infinite ease-in-out;
 }
 
-/* smaller on narrow screens */
-@media (max-width: 480px) {
-    .footer-info { font-size: 0.95rem; padding: 8px 10px; }
+@keyframes glowPulse {
+    0% {
+        box-shadow: 0 0 4px rgba(255,255,255,0.2);
+    }
+    50% {
+        box-shadow: 0 0 18px rgba(0,255,140,0.7);
+    }
+    100% {
+        box-shadow: 0 0 4px rgba(255,255,255,0.2);
+    }
 }
+
 
 /* ============================================================
    1) CAMERA BOX
