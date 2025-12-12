@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>GeoQuiz QR – Kiosk Edition</title>
-    <title>GeoQuiz QR – Kumpulan 1</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -36,6 +35,9 @@
 
     <!-- PANEL MAKLUMAT PERMAINAN -->
     <div class="info-panel">
+        <div class="label">Nama Batuan:</div>
+        <div id="rockName" class="value">–</div>
+
         <div class="label">Masa:</div>
         <div id="timer" class="value">–</div>
 
@@ -66,7 +68,6 @@
 </div>
 
 <!-- HALL OF FAME (LOCALSTORAGE) -->
-<!-- HALL OF FAME (LOCALSTORAGE, tak save reset bila tutup) -->
 <div class="sidebar">
     <div class="hof-box">
         <h2>🏆 Hall of Fame</h2>
@@ -75,8 +76,7 @@
 </div>
 
 <!-- Library jsQR -->
-<!--<script src="https://unpkg.com/jsqr"></script>-->
-<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+<script src="https://unpkg.com/jsqr"></script>
 <!-- Script utama -->
 <script src="script.js"></script>
 
