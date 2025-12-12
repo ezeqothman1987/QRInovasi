@@ -23,7 +23,27 @@ h1 {
     color: #d4e5c2;
     text-shadow: 0 0 8px rgba(160, 200, 130, 0.55);
 }
+/* footer-info bar below buttons */
+.footer-info {
+    width: 100%;
+    max-width: 720px; /* match main container width if perlu */
+    margin: 12px auto 0;
+    background: rgba(0,0,0,0.85);
+    color: #e6f9e6;
+    text-align: center;
+    padding: 10px 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    border: 1px solid rgba(180,200,160,0.18);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    letter-spacing: 0.4px;
+    font-size: 1rem;
+}
 
+/* smaller on narrow screens */
+@media (max-width: 480px) {
+    .footer-info { font-size: 0.95rem; padding: 8px 10px; }
+}
 
 /* ============================================================
    1) CAMERA BOX
