@@ -1,302 +1,209 @@
 /* ============================================================
-   GEO-QUIZ QR – FINAL VERSION (2 BUTTON: BETUL / SALAH)
-   ============================================================ */
-
-/* -----------------------------------------
-   SETTINGS
--------------------------------------------- */
-
-// Lokasi folder QR (jika perlu guna kemudian)
+   KONFIGURASI
+============================================================ */
 const QR_PATH = "static/qr_images/";
+const TOTAL_ROUNDS = 5;
+const ROUND_TIME = 30; // 30 saat
 
-// Bunyi (fail belum ada, ini hanya placeholder)
+// Bunyi (anda akan upload kemudian)
 const soundCorrect = new Audio("static/sound/correct.mp3");
 const soundWrong   = new Audio("static/sound/wrong.mp3");
-const soundTimeUp  = new Audio("static/sound/timeup.mp3");
+const soundTimeup  = new Audio("static/sound/timeup.mp3");
 
+/* ============================================================
+   PEMBOLEHUBAH GLOBAL
+============================================================ */
+let video = null;
+let canvas = null;
+let ctx = null;
+let scanning = false;
 
-// Untuk elak baca QR berturut2
-let lastQR = "";
-
-// Game state
-let gameActive = false;
-let timerStarted = false;   // ✔ Timer hanya mula selepas QR pertama
-let timerInterval;
-let timeLeft = 30;          // ✔ Timer = 30s
+let currentPayload = "";
+let roundCount = 0;
 let score = 0;
-
-// Kamera elemen
-const video = document.getElementById("video");
-const canvas = document.getElementById("qr-canvas");
-const ctx = canvas.getContext("2d");
-
-// Butang jawapan
-const btnCorrect = document.getElementById("btnCorrect");
-const btnWrong   = document.getElementById("btnWrong");
-
-// UI
-const rockName = document.getElementById("rockName");
-const timerEl  = document.getElementById("timer");
-const scoreEl  = document.getElementById("score");
-const startBtn = document.getElementById("startScanBtn");
-const scannerOverlay = document.getElementById("scannerOverlay");
-
+let timer = ROUND_TIME;
+let timerInterval = null;
+let awaitingAnswer = false; // ⭐ Penting – Timer hanya berjalan bila tunggu jawapan
 
 /* ============================================================
-   GAME FLOW
-   ============================================================ */
-
-startBtn.addEventListener("click", startGame);
-
+   MULA GAME
+============================================================ */
 function startGame() {
-    if (gameActive) return;
+    console.log("Game bermula…");
 
-    gameActive = true;
-    timerStarted = false;          // ✔ Timer BELUM mula
-    startBtn.disabled = true;
-
+    roundCount = 0;
     score = 0;
-    scoreEl.textContent = score;
+    stopTimer();
 
-    timeLeft = 30;                  // ✔ Timer mula pada 30 tetapi tidak countdown lagi
-    timerEl.textContent = timeLeft;
+    document.getElementById("gameOverScreen").style.display = "none";
+    document.getElementById("timerDisplay").textContent = ROUND_TIME;
 
-    rockName.textContent = "–";
-
-    scannerOverlay.style.display = "block";
-    lastQR = "";
-
-    startCamera();                  // ✔ Hanya aktif kamera dahulu
+    startCamera();
 }
-
 
 /* ============================================================
-   TIMER (bermula selepas QR pertama)
-   ============================================================ */
-
-function startTimer() {
-    if (timerStarted) return;       // ✔ Elak timer 2 kali
-
-    timerStarted = true;
-
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-
-        timeLeft--;
-        timerEl.textContent = timeLeft;
-
-        if (timeLeft <= 0) {
-            soundTimeUp.play().catch(()=>{});
-            endGame();
-        }
-
-    }, 1000);
-}
-
-
-/* ============================================================
-   END GAME
-   ============================================================ */
-function endGame() {
-    clearInterval(timerInterval);
-    gameActive = false;
-    timerStarted = false;
-
-    startBtn.disabled = false;
-    scannerOverlay.style.display = "none";
-
-    // Hentikan kamera
-    if (video.srcObject) {
-        video.srcObject.getTracks().forEach(t => t.stop());
-    }
-
-    // Papar popup tamat
-    document.getElementById("finalScore").textContent = score;
-    document.getElementById("endModal").style.display = "block";
-}
-
-function resetGame() {
-    document.getElementById("endModal").style.display = "none";
-    startGame();
-}
-
-
-/* ============================================================
-   CAMERA + QR SCANNER
-   ============================================================ */
-
+   KAMERA
+============================================================ */
 function startCamera() {
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-        .then(stream => {
-            video.srcObject = stream;
-            video.play();
-            scanLoop();
-        })
-        .catch(err => {
-            console.error("Camera error: ", err);
-        });
+    video = document.getElementById("video");
+    canvas = document.getElementById("qrCanvas");
+    ctx = canvas.getContext("2d");
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }})
+    .then(stream => {
+        video.srcObject = stream;
+        video.setAttribute("playsinline", true);
+        video.play();
+
+        scanning = true;
+        scanLoop();
+    })
+    .catch(err => {
+        console.error("Camera error: ", err);
+    });
 }
 
+/* ============================================================
+   LOOP IMEJ KAMERA → CUBA BACA QR
+============================================================ */
 function scanLoop() {
-    if (!gameActive) return;
+    if (!scanning) return;
 
-    // Pastikan video sudah ready
-    if (video.videoWidth === 0) {
-        requestAnimationFrame(scanLoop);
-        return;
-    }
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        try {
+            let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            let code = jsQR(imageData.data, canvas.width, canvas.height);
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-    const code = jsQR(imageData.data, canvas.width, canvas.height);
-
-    if (code && code.data) {
-
-        const qr = code.data.trim().toLowerCase();
-
-        if (qr !== lastQR) {   // Anti spam
-            lastQR = qr;
-            processQR(qr);
+            if (code) {
+                handleQR(code.data);
+            }
+        } catch (err) {
+            /* Kadang² error bila frame kosong – abaikan sahaja */
         }
     }
 
     requestAnimationFrame(scanLoop);
 }
 
-
 /* ============================================================
-   PROCESS QR (betul/salah)
-   ============================================================ */
+   BILA QR BERJAYA DIBACA
+============================================================ */
+function handleQR(payload) {
+    if (awaitingAnswer) return; // ⭐ Anti-QR spam
 
-function processQR(qrText) {
+    console.log("QR payload:", payload);
 
-    // ✔ MULA TIMER apabila QR pertama dikesan
-    if (!timerStarted) startTimer();
+    currentPayload = payload.trim().toLowerCase();
 
-    rockName.textContent = qrText.toUpperCase();
-
-    if (qrText === "betul") {
-        handleAnswer(true);
-    } 
-    else if (qrText === "salah") {
-        handleAnswer(false);
-    } 
-    else {
-        console.warn("QR tidak dikenali:", qrText);
+    // QR mesti "betul" atau "salah"
+    if (currentPayload !== "betul" && currentPayload !== "salah") {
+        console.log("QR tidak sah.");
+        return;
     }
 
-    // Reset QR lock selepas 1.2s
-    setTimeout(() => { lastQR = ""; }, 1200);
+    awaitingAnswer = true;
+
+    // START TIMER HANYA SELEPAS QR
+    startTimer();
 }
 
-
 /* ============================================================
-   USER ANSWER (BUTTON)
-   ============================================================ */
+   TIMER PER ROUND (MULA selepas QR)
+============================================================ */
+function startTimer() {
+    stopTimer();
+    timer = ROUND_TIME;
+    document.getElementById("timerDisplay").textContent = timer;
 
-btnCorrect.addEventListener("click", () => chooseAnswer(true));
-btnWrong.addEventListener("click", () => chooseAnswer(false));
+    timerInterval = setInterval(() => {
+        timer--;
+        document.getElementById("timerDisplay").textContent = timer;
 
-function chooseAnswer(isCorrectButton) {
-    if (!gameActive || !lastQR) return;
-
-    const isCorrectQR = (lastQR === "betul");
-    const result = (isCorrectButton === isCorrectQR);
-
-    handleAnswer(result);
+        if (timer <= 0) {
+            soundTimeup.play();
+            stopTimer();
+            endGame();            
+        }
+    }, 1000);
 }
 
+function stopTimer() {
+    clearInterval(timerInterval);
+}
 
 /* ============================================================
-   FEEDBACK (MARKAH MENGIKUT KELAJUAN + ANIMASI)
-   ============================================================ */
+   BUTANG BETUL / SALAH
+============================================================ */
+document.getElementById("btnCorrect").addEventListener("click", () => checkAnswer("betul"));
+document.getElementById("btnWrong").addEventListener("click", () => checkAnswer("salah"));
 
-function handleAnswer(correct) {
+function checkAnswer(userChoice) {
+    if (!awaitingAnswer) return;
 
-    if (correct) {
+    stopTimer();
 
-        /* -----------------------------------------
-           MARKAH MENGIKUT KELAJUAN:
-           max 10, min 1
-           formula = ceil(timeLeft / 3)
-        --------------------------------------------*/
-        let speedScore = Math.max(1, Math.ceil(timeLeft / 3));
+    const isCorrect = userChoice === currentPayload;
 
-        score += speedScore;
-        scoreEl.textContent = score;
+    if (isCorrect) {
+        soundCorrect.play();
 
-        soundCorrect.play().catch(()=>{});
-        animateFeedback("correct");
+        // MARKAH berdasarkan masa
+        let earned = Math.max(1, Math.min(10, Math.floor(timer / 3)));
+        score += earned;
+
+        roundCount++;
+
+        if (roundCount >= TOTAL_ROUNDS) {
+            endGame();
+        } else {
+            awaitingAnswer = false; // QR seterusnya boleh scan
+        }
 
     } else {
-
-        // Penalti salah (tetap -5)
-        score -= 5;
-        scoreEl.textContent = score;
-
-        soundWrong.play().catch(()=>{});
-        animateFeedback("wrong");
+        soundWrong.play();
+        endGame();
     }
-
-    // Reset QR untuk soalan seterusnya
-    rockName.textContent = "–";
-    lastQR = "";
 }
-
 
 /* ============================================================
-   ANIMASI HIGHLIGHT BUTTON PANEL
-   ============================================================ */
+   TAMAT GAME
+============================================================ */
+function endGame() {
+    scanning = false;
+    awaitingAnswer = false;
+    stopTimer();
 
-function animateFeedback(type) {
-    const panel = document.querySelector(".button-panel");
-
-    if (type === "correct") {
-        panel.classList.add("flash-green");
-        setTimeout(() => panel.classList.remove("flash-green"), 400);
-
-    } else {
-        panel.classList.add("flash-red");
-        setTimeout(() => panel.classList.remove("flash-red"), 400);
-    }
+    document.getElementById("finalScore").textContent = score;
+    document.getElementById("hallOfFameScreen").style.display = "block";
 }
-
 
 /* ============================================================
    HALL OF FAME
-   ============================================================ */
-
+============================================================ */
 function saveHallOfFame() {
-    const name = document.getElementById("playerName").value.trim();
-    if (!name) return;
+    const nameEl = document.getElementById("playerName");
+    const name = (nameEl && nameEl.value) ? nameEl.value : "Tanpa Nama";
 
-    let hof = JSON.parse(localStorage.getItem("hof") || "[]");
+    const entry = {
+        name: name,
+        score: score,
+        date: new Date().toLocaleString()
+    };
 
-    hof.push({ name, score });
-    hof.sort((a, b) => b.score - a.score);
+    let list = JSON.parse(localStorage.getItem("hallOfFame") || "[]");
 
-    localStorage.setItem("hof", JSON.stringify(hof));
+    list.push(entry);
 
-    loadHallOfFame();
-    resetGame();
+    list.sort((a, b) => b.score - a.score);
+
+    localStorage.setItem("hallOfFame", JSON.stringify(list));
+
+    document.getElementById("hallOfFameScreen").style.display = "none";
 }
 
-function loadHallOfFame() {
-    const list = document.getElementById("hofList");
-    list.innerHTML = "";
-
-    let hof = JSON.parse(localStorage.getItem("hof") || "[]");
-
-    hof.forEach((entry, index) => {
-        const li = document.createElement("li");
-        li.className = "hof-item";
-        if (index === 0) li.classList.add("top-score");
-        li.textContent = `${entry.name} – ${entry.score}`;
-        list.appendChild(li);
-    });
-}
+document.getElementById("saveNameBtn").addEventListener("click", saveHallOfFame);
