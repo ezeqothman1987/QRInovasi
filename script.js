@@ -481,7 +481,17 @@ document.addEventListener("DOMContentLoaded", ()=> {
         startCamera();
     });
 });
-
+/* =========================
+   15) SAFE AUDIO PLAY WRAPPER
+   - Elakkan crash jika audio tak dapat dimainkan
+   ========================= */
+function safePlay(audioObj) {
+    if (!audioObj || typeof audioObj.play !== "function") return;
+    try {
+        audioObj.currentTime = 0;
+        audioObj.play().catch(()=>{});
+    } catch (e) {}
+}
 /* =========================
    15) NOTES FOR FUTURE EDITS
    - To change scoring formula: edit playerAnswer where 'raw' and 'earned' computed.
