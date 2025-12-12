@@ -341,3 +341,25 @@ h1 {
     box-shadow: 0 0 12px rgba(80,255,120,0.55);
     transform: scale(1.03);
 }
+/* ============================================================
+   ANSWER FEEDBACK FLASH (HIJAU / MERAH PADA BUTTON PANEL SAHAJA)
+   ============================================================ */
+
+.button-panel.flash-green {
+    animation: flashGreen 0.35s ease-out;
+}
+
+.button-panel.flash-red {
+    animation: flashRed 0.35s ease-out;
+}
+
+@keyframes flashGreen {
+    0% { background: rgba(0, 255, 0, 0.35); }
+    100% { background: transparent; }
+}
+
+@keyframes flashRed {
+    0% { background: rgba(255, 0, 0, 0.35); }
+    100% { background: transparent; }
+}
+
