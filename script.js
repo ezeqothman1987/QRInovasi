@@ -133,13 +133,15 @@ function getCategoryFromQR(name) {
    ANIMATION (GREEN / RED)
    ============================================================ */
 function animateCorrect() {
-    document.body.classList.add("flash-green");
-    setTimeout(() => document.body.classList.remove("flash-green"), 350);
+    const panel = document.querySelector(".button-panel");
+    panel.classList.add("flash-green");
+    setTimeout(() => panel.classList.remove("flash-green"), 350);
 }
 
 function animateWrong() {
-    document.body.classList.add("flash-red");
-    setTimeout(() => document.body.classList.remove("flash-red"), 350);
+    const panel = document.querySelector(".button-panel");
+    panel.classList.add("flash-red");
+    setTimeout(() => panel.classList.remove("flash-red"), 350);
 }
 
 /* ============================================================
