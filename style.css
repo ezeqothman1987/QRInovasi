@@ -43,14 +43,14 @@ body {
     padding: 10px 18px;
     border-radius: 10px;
     border: none;
-    background: #2a4;
+    background: #fa3;
     color: #fff;
     cursor: pointer;
     transition: 0.2s;
 }
 .start-btn:hover,
 #connectArduinoBtn:hover {
-    background: #3d5;
+    background: #c70;
 }
 
 /* ============================================================
