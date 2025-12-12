@@ -453,7 +453,6 @@ function loadHallOfFame() {
         hofList.appendChild(li);
     });
 }
-}
 
 /* ============================================================
    11) Web Serial (Arduino / ESP32) – OPTIONAL
