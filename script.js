@@ -6,8 +6,8 @@ const QR_PATH = "static/qr_images/";
 
 /* QR or Image je - adding, buang '//' pada nama tersebut. */
 const validQRImages = [
-    "GRANITE",
-      "GNEISS",
+    "granite",
+      "gneiss",
     // "batu3",
     // "batu4",
     // "batu5",
@@ -27,8 +27,8 @@ const validQRImages = [
    2) KATEGORI BATU
    ============================================================ */
 const rockCategory = {
-    GRANITE: "Igneus",
-    GNEISS: "Metamorf",
+    granite: "Igneus",
+    gneiss: "Metamorf",
     batu3: "Sedimen",
     batu4: "Sedimen",
     batu5: "Metamorf",
@@ -182,7 +182,7 @@ function scanQR() {
     const qr = jsQR(imageData.data, canvas.width, canvas.height);
 
     if (!scanning && qr) {
-        const raw = qr.data.trim().toUpperCase();
+        const raw = qr.data.trim().toLowerCase(); //semua source nama fail mesti lowercase -debug 12 dec
 
         // ANTI-SPAM COOLDOWN
         const now = Date.now();
