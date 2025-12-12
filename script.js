@@ -10,8 +10,8 @@
    0) CONFIG
    ========================= */
 const TOTAL_ROUNDS = 5;
-const ROUND_TIME = 15;       // seconds per question active
-const NEXT_ROUND_TIME = 15;  // time to display after correct (paused)
+const ROUND_TIME = 20;       // seconds per question active
+const NEXT_ROUND_TIME = 20;  // time to display after correct (paused)
 const MAX_POINTS = 10;
 const MIN_POINTS = 1;
 const AUDIO_PATH = "static/sound/"; // ensure files exist: correct.mp3, wrong.mp3, timeup.mp3
@@ -66,7 +66,7 @@ let timeRemaining = 0;
 let questionInterval = null;
 let pausedUntilNextQR = false; // when true, timer won't decrement
 let qrDebounce = false;        // short frame debounce
-let isCooldown = false;        // longer cooldown (3s) after scan to prevent reprocessing
+let isCooldown = false;        // longer cooldown (?s) after scan to prevent reprocessing
 
 /* =========================
    4) UI init & event hooks
@@ -223,9 +223,9 @@ function scanLoop(){
                 qrDebounce = true;
                 setTimeout(()=> qrDebounce = false, 1200);
 
-                // enable cooldown so new scans are ignored for 5s
+                // enable cooldown so new scans are ignored for 9s
                 isCooldown = true;
-                setTimeout(()=> { isCooldown = false; }, 5000);
+                setTimeout(()=> { isCooldown = false; }, 9000);
 
                 processScannedQR(code.data);
             }
