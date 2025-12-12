@@ -22,12 +22,13 @@
         <button id="startScanBtn" class="start-btn">🎮 Mula Bermain</button>
     </div>
 
-    <!-- VIDEO FEED CAMERA + CANVAS UNTUK SCAN QR -->
+    <!-- VIDEO FEED CAMERA + CANVAS -->
     <div class="video-box">
-        <video id="video" playsinline></video>
+        <!-- TIDAK AUTOPLAY — bagus -->
+        <video id="video" playsinline muted></video>
 
-        <!-- ANIMASI SCAN QR -->
-        <div class="scanner-overlay" id="scannerOverlay">
+        <!-- SCANNER OVERLAY -->
+        <div class="scanner-overlay" id="scannerOverlay" style="display:none;">
             <div class="scan-area">
                 <div class="scan-line"></div>
                 <div class="scan-corner top-left"></div>
@@ -37,12 +38,14 @@
             </div>
         </div>
 
+        <!-- CANVAS QR -->
         <canvas id="qr-canvas" hidden></canvas>
 
+        <!-- CAMERA STATUS -->
         <div id="cameraStatus" class="camera-status">Kamera belum diaktifkan.</div>
     </div>
 
-    <!-- PANEL MAKLUMAT PERMAINAN -->
+    <!-- PANEL INFO -->
     <div class="info-panel">
         <div class="label">Nama Batuan:</div>
         <div id="rockName" class="value">–</div>
@@ -54,7 +57,7 @@
         <div id="score" class="value">0</div>
     </div>
 
-    <!-- PILIHAN KATEGORI -->
+    <!-- BUTANG PILIHAN -->
     <div class="button-panel">
         <button class="cat-btn ig" onclick="chooseCategory('igneous')">Igneus</button>
         <button class="cat-btn sd" onclick="chooseCategory('sedimentary')">Sedimen</button>
@@ -90,8 +93,11 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-<script src="script.js"></script>
+<!-- jsQR WAJIB DIDAHULUKAN -->
 <script src="jsQR.js"></script>
+
+<!-- SCRIPT GAME -->
+<script src="script.js"></script>
 
 </body>
 </html>
