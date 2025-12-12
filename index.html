@@ -24,7 +24,6 @@
 
     <!-- VIDEO FEED CAMERA + CANVAS -->
     <div class="video-box">
-        <!-- TIDAK AUTOPLAY — bagus -->
         <video id="video" playsinline muted></video>
 
         <!-- SCANNER OVERLAY -->
@@ -57,12 +56,10 @@
         <div id="score" class="value">0</div>
     </div>
 
-    <!-- BUTANG PILIHAN -->
+    <!-- BUTANG BETUL / SALAH -->
     <div class="button-panel">
-        <button class="cat-btn ig" onclick="chooseCategory('igneous')">Igneus</button>
-        <button class="cat-btn sd" onclick="chooseCategory('sedimentary')">Sedimen</button>
-        <button class="cat-btn mt" onclick="chooseCategory('metamorphic')">Metamorph</button>
-        <button class="cat-btn mn" onclick="chooseCategory('mineral')">Mineral</button>
+        <button id="btnCorrect" class="cat-btn correct">BETUL</button>
+        <button id="btnWrong" class="cat-btn wrong">SALAH</button>
     </div>
 
 </div>
