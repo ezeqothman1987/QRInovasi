@@ -5,21 +5,24 @@
 /* -----------------------------------------
    SETTINGS
 -------------------------------------------- */
+
+// Lokasi folder QR (jika perlu guna kemudian)
 const QR_PATH = "static/qr_images/";
 
-// Bunyi )
+// Bunyi (fail belum ada, ini hanya placeholder)
 const soundCorrect = new Audio("static/sound/correct.mp3");
 const soundWrong   = new Audio("static/sound/wrong.mp3");
 const soundTimeUp  = new Audio("static/sound/timeup.mp3");
 
 
-// Untuk elak baca QR sama 2 kali
+// Untuk elak baca QR berturut2
 let lastQR = "";
 
 // Game state
 let gameActive = false;
+let timerStarted = false;   // ✔ Timer hanya mula selepas QR pertama
 let timerInterval;
-let timeLeft = 20;
+let timeLeft = 30;          // ✔ Timer = 30s
 let score = 0;
 
 // Kamera elemen
@@ -49,12 +52,13 @@ function startGame() {
     if (gameActive) return;
 
     gameActive = true;
+    timerStarted = false;          // ✔ Timer BELUM mula
     startBtn.disabled = true;
 
     score = 0;
     scoreEl.textContent = score;
 
-    timeLeft = 20;
+    timeLeft = 30;                  // ✔ Timer mula pada 30 tetapi tidak countdown lagi
     timerEl.textContent = timeLeft;
 
     rockName.textContent = "–";
@@ -62,17 +66,22 @@ function startGame() {
     scannerOverlay.style.display = "block";
     lastQR = "";
 
-    startCamera();
-    startTimer();
+    startCamera();                  // ✔ Hanya aktif kamera dahulu
 }
 
 
 /* ============================================================
-   TIMER
+   TIMER (bermula selepas QR pertama)
    ============================================================ */
+
 function startTimer() {
+    if (timerStarted) return;       // ✔ Elak timer 2 kali
+
+    timerStarted = true;
+
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
+
         timeLeft--;
         timerEl.textContent = timeLeft;
 
@@ -80,6 +89,7 @@ function startTimer() {
             soundTimeUp.play().catch(()=>{});
             endGame();
         }
+
     }, 1000);
 }
 
@@ -90,8 +100,9 @@ function startTimer() {
 function endGame() {
     clearInterval(timerInterval);
     gameActive = false;
-    startBtn.disabled = false;
+    timerStarted = false;
 
+    startBtn.disabled = false;
     scannerOverlay.style.display = "none";
 
     // Hentikan kamera
@@ -129,6 +140,12 @@ function startCamera() {
 function scanLoop() {
     if (!gameActive) return;
 
+    // Pastikan video sudah ready
+    if (video.videoWidth === 0) {
+        requestAnimationFrame(scanLoop);
+        return;
+    }
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
@@ -139,6 +156,7 @@ function scanLoop() {
     const code = jsQR(imageData.data, canvas.width, canvas.height);
 
     if (code && code.data) {
+
         const qr = code.data.trim().toLowerCase();
 
         if (qr !== lastQR) {   // Anti spam
@@ -157,13 +175,18 @@ function scanLoop() {
 
 function processQR(qrText) {
 
+    // ✔ MULA TIMER apabila QR pertama dikesan
+    if (!timerStarted) startTimer();
+
     rockName.textContent = qrText.toUpperCase();
 
     if (qrText === "betul") {
         handleAnswer(true);
-    } else if (qrText === "salah") {
+    } 
+    else if (qrText === "salah") {
         handleAnswer(false);
-    } else {
+    } 
+    else {
         console.warn("QR tidak dikenali:", qrText);
     }
 
@@ -183,26 +206,36 @@ function chooseAnswer(isCorrectButton) {
     if (!gameActive || !lastQR) return;
 
     const isCorrectQR = (lastQR === "betul");
-
     const result = (isCorrectButton === isCorrectQR);
+
     handleAnswer(result);
 }
 
 
 /* ============================================================
-   FEEDBACK (POINT + ANIMATION)
+   FEEDBACK (MARKAH MENGIKUT KELAJUAN + ANIMASI)
    ============================================================ */
 
 function handleAnswer(correct) {
 
     if (correct) {
-        score += 10;
+
+        /* -----------------------------------------
+           MARKAH MENGIKUT KELAJUAN:
+           max 10, min 1
+           formula = ceil(timeLeft / 3)
+        --------------------------------------------*/
+        let speedScore = Math.max(1, Math.ceil(timeLeft / 3));
+
+        score += speedScore;
         scoreEl.textContent = score;
 
         soundCorrect.play().catch(()=>{});
         animateFeedback("correct");
 
     } else {
+
+        // Penalti salah (tetap -5)
         score -= 5;
         scoreEl.textContent = score;
 
@@ -210,7 +243,7 @@ function handleAnswer(correct) {
         animateFeedback("wrong");
     }
 
-    // Reset untuk next QR
+    // Reset QR untuk soalan seterusnya
     rockName.textContent = "–";
     lastQR = "";
 }
@@ -226,6 +259,7 @@ function animateFeedback(type) {
     if (type === "correct") {
         panel.classList.add("flash-green");
         setTimeout(() => panel.classList.remove("flash-green"), 400);
+
     } else {
         panel.classList.add("flash-red");
         setTimeout(() => panel.classList.remove("flash-red"), 400);
@@ -234,7 +268,7 @@ function animateFeedback(type) {
 
 
 /* ============================================================
-   HALL OF FAME (tidak diubah)
+   HALL OF FAME
    ============================================================ */
 
 function saveHallOfFame() {
