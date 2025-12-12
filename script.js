@@ -29,7 +29,7 @@ const fullscreenBtn = document.getElementById("fullscreenBtn");
 const scannerOverlay = document.getElementById("scannerOverlay");
 
 const qrCanvas = document.getElementById("qr-canvas");
-const qrCtx = qrCanvas.getContext("2d");
+const qrCtx = qrCanvas.getContext("2d", { willReadFrequently: true });
 
 /* ============================================================
    4) GLOBAL VARIABLES
