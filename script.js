@@ -287,51 +287,60 @@ function stopQuestionTimer(){
 
 /* =========================
    09) PLAYER ANSWER (compare with lastQR)
-   - correct: award points based on remaining time, set NEXT_ROUND_TIME and pause until next QR
-   - wrong: play wrong sound and end game
+   - corrected: stopQuestionTimer() is called immediately to avoid timer race
    ========================= */
 function playerAnswer(answer){
     if (!awaitingAnswer) return;
 
     const a = String(answer).trim().toLowerCase();
     if (!lastQR) {
+        // defensive: if no lastQR treat as wrong
         safePlay(soundWrong);
         endGame();
         return;
     }
 
     if (a === lastQR) {
-        // correct
-        soundCorrect.play().catch(()=>{});
+        // --- STOP TIMER IMMEDIATELY to avoid race where interval still decrements ---
+        stopQuestionTimer();
 
-        // compute earned points (proportional)
+        // Play correct sound
+        safePlay(soundCorrect);
+
+        // compute earned points (proportional to remaining time)
+        // use ROUND_TIME as baseline (so answering very quickly gets near MAX_POINTS)
         let raw = Math.ceil((timeRemaining / ROUND_TIME) * MAX_POINTS);
         let earned = Math.max(MIN_POINTS, Math.min(MAX_POINTS, raw));
         score += earned;
         setText("score", String(score));
 
+        // progress round
         roundCount++;
-        awaitingAnswer = false;
-        stopQuestionTimer();
 
-        // set pause until next QR and show NEXT_ROUND_TIME
+        // mark question as answered so scanner can be re-enabled later
+        awaitingAnswer = false;
+
+        // set NEXT_ROUND_TIME but DO NOT start countdown (paused until next QR)
         timeRemaining = NEXT_ROUND_TIME;
         setText("timer", String(timeRemaining));
         pausedUntilNextQR = true;
 
+        // small UX delay then clear prompt and lastQR
         setTimeout(()=> {
             setText("rockName", "–");
             lastQR = "";
         }, 500);
 
+        // If reached total rounds, end game shortly
         if (roundCount >= TOTAL_ROUNDS) {
             setTimeout(()=> endGame(), 600);
         }
+
     } else {
-        // wrong -> immediate end
+        // Wrong answer -> immediate end
+        stopQuestionTimer(); // ensure timer stopped
         safePlay(soundWrong);
         awaitingAnswer = false;
-        stopQuestionTimer();
         endGame();
     }
 }
