@@ -414,18 +414,45 @@ function saveHallOfFame(){
     const endModal = el("endModal"); if (endModal) endModal.style.display = "none";
 }
 
-function loadHallOfFame(){
-    const list = el("hofList");
-    if (!list) return;
-    list.innerHTML = "";
-    const hof = JSON.parse(localStorage.getItem("hof") || "[]");
-    hof.forEach((entry, idx) => {
-        const li = document.createElement("li");
-        li.className = "hof-item" + (idx===0 ? " top-score" : "");
-        const medal = ["🥇","🥈","🥉"][idx] || "";
-        li.textContent = `${medal} ${entry.name} – ${entry.score} pts (${entry.time})`;
-        list.appendChild(li);
+/* ============================================================
+   Hall of Fame — BORDER + ICON
+============================================================ */
+function loadHallOfFame() {
+    const hofList = document.getElementById("hofList");
+    if (!hofList) return;
+    hofList.innerHTML = "";
+
+    let hof = JSON.parse(localStorage.getItem("hof") || "[]");
+
+    // Susun ikut markah (desc), masa (asc)
+    hof.sort((a, b) => {
+        if (b.score === a.score) return a.time - b.time;
+        return b.score - a.score;
     });
+
+    // Hadkan ke 10 terbaik
+    hof = hof.slice(0, 10);
+
+    hof.forEach((item, index) => {
+        let icon = "⭐";
+        if (index === 0) icon = "🥇";
+        else if (index === 1) icon = "🥈";
+        else if (index === 2) icon = "🥉";
+
+        const li = document.createElement("li");
+        li.className = "hof-item";
+
+        li.innerHTML = `
+            <div class="hof-rank-icon">${icon}</div>
+            <div class="hof-details">
+                <span class="name">${item.name}</span>
+                <span class="score">Markah: ${item.score} | Masa: ${item.time}s</span>
+            </div>
+        `;
+
+        hofList.appendChild(li);
+    });
+}
 }
 
 /* ============================================================
