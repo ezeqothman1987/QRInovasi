@@ -3,9 +3,9 @@
 ============================================================ */
 const QR_PATH = "static/qr_images/";
 const TOTAL_ROUNDS = 5;
-const ROUND_TIME = 30; // 30 saat
+const ROUND_TIME = 30;
 
-// Bunyi (anda akan upload kemudian)
+// Bunyi
 const soundCorrect = new Audio("static/sound/correct.mp3");
 const soundWrong   = new Audio("static/sound/wrong.mp3");
 const soundTimeup  = new Audio("static/sound/timeup.mp3");
@@ -23,7 +23,7 @@ let roundCount = 0;
 let score = 0;
 let timer = ROUND_TIME;
 let timerInterval = null;
-let awaitingAnswer = false; // ⭐ Penting – Timer hanya berjalan bila tunggu jawapan
+let awaitingAnswer = false;
 
 /* ============================================================
    MULA GAME
@@ -33,10 +33,11 @@ function startGame() {
 
     roundCount = 0;
     score = 0;
-    stopTimer();
+    awaitingAnswer = false;
 
-    document.getElementById("gameOverScreen").style.display = "none";
-    document.getElementById("timerDisplay").textContent = ROUND_TIME;
+    document.getElementById("score").textContent = 0;
+    document.getElementById("rockName").textContent = "–";
+    document.getElementById("timer").textContent = ROUND_TIME;
 
     startCamera();
 }
@@ -46,7 +47,7 @@ function startGame() {
 ============================================================ */
 function startCamera() {
     video = document.getElementById("video");
-    canvas = document.getElementById("qrCanvas");
+    canvas = document.getElementById("qr-canvas");   // <-- betul ikut index.html
     ctx = canvas.getContext("2d");
 
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }})
@@ -60,11 +61,12 @@ function startCamera() {
     })
     .catch(err => {
         console.error("Camera error: ", err);
+        document.getElementById("cameraStatus").textContent = "Gagal buka kamera!";
     });
 }
 
 /* ============================================================
-   LOOP IMEJ KAMERA → CUBA BACA QR
+   LOOP KAMERA → BACA QR
 ============================================================ */
 function scanLoop() {
     if (!scanning) return;
@@ -82,52 +84,49 @@ function scanLoop() {
             if (code) {
                 handleQR(code.data);
             }
-        } catch (err) {
-            /* Kadang² error bila frame kosong – abaikan sahaja */
-        }
+        } catch (err) { }
     }
 
     requestAnimationFrame(scanLoop);
 }
 
 /* ============================================================
-   BILA QR BERJAYA DIBACA
+   BILA QR DIBACA
 ============================================================ */
 function handleQR(payload) {
-    if (awaitingAnswer) return; // ⭐ Anti-QR spam
-
-    console.log("QR payload:", payload);
+    if (awaitingAnswer) return;
 
     currentPayload = payload.trim().toLowerCase();
+    console.log("QR payload:", currentPayload);
 
-    // QR mesti "betul" atau "salah"
     if (currentPayload !== "betul" && currentPayload !== "salah") {
         console.log("QR tidak sah.");
         return;
     }
 
-    awaitingAnswer = true;
+    // papar nama batuan di UI
+    document.getElementById("rockName").textContent = currentPayload.toUpperCase();
 
-    // START TIMER HANYA SELEPAS QR
+    awaitingAnswer = true;
     startTimer();
 }
 
 /* ============================================================
-   TIMER PER ROUND (MULA selepas QR)
+   TIMER
 ============================================================ */
 function startTimer() {
     stopTimer();
     timer = ROUND_TIME;
-    document.getElementById("timerDisplay").textContent = timer;
+    document.getElementById("timer").textContent = timer;
 
     timerInterval = setInterval(() => {
         timer--;
-        document.getElementById("timerDisplay").textContent = timer;
+        document.getElementById("timer").textContent = timer;
 
         if (timer <= 0) {
             soundTimeup.play();
             stopTimer();
-            endGame();            
+            endGame();
         }
     }, 1000);
 }
@@ -152,16 +151,18 @@ function checkAnswer(userChoice) {
     if (isCorrect) {
         soundCorrect.play();
 
-        // MARKAH berdasarkan masa
+        // kira markah ikut masa
         let earned = Math.max(1, Math.min(10, Math.floor(timer / 3)));
         score += earned;
+        document.getElementById("score").textContent = score;
 
         roundCount++;
 
         if (roundCount >= TOTAL_ROUNDS) {
             endGame();
         } else {
-            awaitingAnswer = false; // QR seterusnya boleh scan
+            awaitingAnswer = false; // QR seterusnya boleh dibaca
+            document.getElementById("rockName").textContent = "–";
         }
 
     } else {
@@ -179,84 +180,69 @@ function endGame() {
     stopTimer();
 
     document.getElementById("finalScore").textContent = score;
-    document.getElementById("hallOfFameScreen").style.display = "block";
+
+    document.getElementById("endModal").style.display = "block";
 }
 
 /* ============================================================
-   HALL OF FAME (versi lengkap)
-   ============================================================ */
+   RESET GAME
+============================================================ */
+function resetGame() {
+    document.getElementById("endModal").style.display = "none";
+    startGame();
+}
 
+/* ============================================================
+   HALL OF FAME
+============================================================ */
 function saveHallOfFame() {
     const name = document.getElementById("playerName").value.trim();
     if (!name) return;
 
     let hof = JSON.parse(localStorage.getItem("hof") || "[]");
 
-    // Format tarikh & masa cantik
     const now = new Date();
     const timestamp =
-        now.toLocaleDateString("ms-MY", {
-            year: "numeric",
-            month: "short",
-            day: "numeric"
-        }) +
+        now.toLocaleDateString("ms-MY", { year: "numeric", month: "short", day: "numeric" }) +
         " " +
-        now.toLocaleTimeString("ms-MY", {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: false
-        });
+        now.toLocaleTimeString("ms-MY", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
 
-    // Rekod baru
     hof.push({
         name,
         score,
         time: timestamp,
-        ms: now.getTime() // digunakan untuk sorting jika score sama
+        ms: now.getTime()
     });
 
-    // Susun:
-    // 1) Markah paling tinggi
-    // 2) Kalau markah sama → masa paling awal (lebih pantas)
+    // Susun ikut markah tinggi → masa cepat
     hof.sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
-        return a.ms - b.ms; // siapa jawab cepat → atas
+        return a.ms - b.ms;
     });
 
-    // Hadkan kepada 10 rekod
+    // Limit 10 rekod
     hof = hof.slice(0, 10);
 
-    // Simpan semula
     localStorage.setItem("hof", JSON.stringify(hof));
 
     loadHallOfFame();
-    resetGame();
 }
-
-
 
 function loadHallOfFame() {
     const list = document.getElementById("hofList");
+    if (!list) return; // jika tiada senarai di HTML (elakkan error)
+
     list.innerHTML = "";
 
     let hof = JSON.parse(localStorage.getItem("hof") || "[]");
 
     hof.forEach((entry, index) => {
         const li = document.createElement("li");
-        li.className = "hof-item";
+        let medal = ["🥇", "🥈", "🥉"][index] || "";
 
-        // Ikon untuk Top 3
-        let medal = "";
-        if (index === 0) medal = "🥇 ";
-        if (index === 1) medal = "🥈 ";
-        if (index === 2) medal = "🥉 ";
-
-        li.textContent = `${medal}${entry.name} – ${entry.score} pts ( ${entry.time} )`;
-
+        li.textContent = `${medal} ${entry.name} – ${entry.score} pts (${entry.time})`;
         list.appendChild(li);
     });
 }
-
 
 document.getElementById("saveNameBtn").addEventListener("click", saveHallOfFame);
