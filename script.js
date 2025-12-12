@@ -100,7 +100,16 @@ function startCamera() {
         return;
     }
 
+    // Dapatkan konteks 2d dengan willReadFrequently (fallback jika tak disokong)
+try {
+    ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) throw new Error("getContext returned null with option");
+    console.log("Canvas 2D context acquired with willReadFrequently.");
+} catch (e) {
+    // Fallback ke tanpa option (compatibility)
     ctx = canvas.getContext("2d");
+    console.log("Canvas 2D context acquired WITHOUT willReadFrequently (fallback).");
+}
 
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }})
         .then(stream => {
@@ -175,7 +184,7 @@ function handleQR(payload) {
     }
 
     // PAPAR TEKS "Sedia Jawab" (menggantikan nama batuan)
-    setText("rockName", "Sedia Jawab");
+    setText("rockName", "MULA MENJAWAB");
 
     awaitingAnswer = true;
     startTimer();
