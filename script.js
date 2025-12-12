@@ -1,45 +1,56 @@
 /* ============================================================
-   script.js — Final (Detailed & Commented)
-   - Matches index.html ids (qr-canvas, video, startBtn/startScanBtn, btnCorrect, btnWrong, hofList, playerName, saveNameBtn, endModal, hallOfFameScreen)
-   - Flow:
-     * Camera starts only after pressing Start
-     * QR contains text "betul" or "salah"
-     * Player answers via Arduino (Web Serial) OR keyboard (1/2 or b/s) OR on-screen buttons
-     * Correct -> play correct.mp3, award points (1..10 based on remaining time), set timer to NEXT_ROUND_TIME but pause countdown until next QR is scanned
-     * Wrong -> play wrong.mp3 -> end game and show modal for name save
-     * Timeup -> play timeup.mp3 -> end game
+   script.js — FINAL (clean, commented, safe)
+   - Matches your index.html ids (qr-canvas, video, startBtn/startScanBtn, btnCorrect, btnWrong, hofList, playerName, saveNameBtn, endModal, hallOfFameScreen)
+   - Flow conforms to your spec (camera starts after Start pressed, QR payload is "betul"/"salah",
+     player answers via Arduino/keyboard/on-screen buttons, scoring/time logic as agreed)
+   - Safe: no duplicate event hooks, safe audio wrapper, graceful fallbacks
    ============================================================ */
 
 /* =========================
-   01) CONFIGURATION
+   00) SETTINGS (edit if needed)
    ========================= */
 const TOTAL_ROUNDS = 5;
-const ROUND_TIME = 15;       // default per-question time (seconds)
-const NEXT_ROUND_TIME = 15;  // time to show between rounds (paused until next QR)
-const MAX_POINTS = 10;
-const MIN_POINTS = 1;
-const AUDIO_PATH = "static/sound/"; // path for audio files
+const ROUND_TIME = 15;       // active question countdown (seconds)
+const NEXT_ROUND_TIME = 15;  // time shown after correct answer, paused until next QR
+const MAX_POINTS = 10;       // max points per question
+const MIN_POINTS = 1;        // min points per question
+const AUDIO_PATH = "static/sound/";
 
 /* =========================
-   02) AUDIO (safe load, fallback to noop)
+   01) AUDIO LOADING + SAFE PLAY
+   - safePlay() is declared early so callers never run into "not defined"
    ========================= */
 const soundCorrect = new Audio(`${AUDIO_PATH}correct.mp3`);
 const soundWrong   = new Audio(`${AUDIO_PATH}wrong.mp3`);
 const soundTimeup  = new Audio(`${AUDIO_PATH}timeup.mp3`);
 
+// fallback: if any audio file fails to load, ensure its .play is a noop
 [soundCorrect, soundWrong, soundTimeup].forEach(a => {
     a.addEventListener("error", ()=> { a.play = ()=>{}; });
 });
 
+/**
+ * safePlay(audioObj)
+ * - Play audio if available without throwing errors.
+ * - Resets currentTime to 0 so short sounds replay each time.
+ */
+function safePlay(audioObj) {
+    if (!audioObj || typeof audioObj.play !== "function") return;
+    try {
+        if ('currentTime' in audioObj) audioObj.currentTime = 0;
+        audioObj.play().catch(()=>{});
+    } catch (e) { /* ignore */ }
+}
+
 /* =========================
-   03) DOM ELEMENTS & SAFE CONTEXT
+   02) DOM HELPERS & CANVAS CONTEXT
    ========================= */
 function el(id){ return document.getElementById(id); }
-function setText(id, txt){ const n = el(id); if(n) n.textContent = txt; }
-function setTextAll(id, txt){ document.querySelectorAll(`#${id}`).forEach(n=>n.textContent = txt); }
+function setText(id, txt){ const n = el(id); if (n) n.textContent = txt; }
+function setTextAll(id, txt){ document.querySelectorAll(`#${id}`).forEach(n => n.textContent = txt); }
 
 const video = el("video");
-const canvas = el("qr-canvas"); // confirmed id
+const canvas = el("qr-canvas"); // confirmed id from your HTML
 let ctx = null;
 if (canvas) {
     try {
@@ -50,23 +61,24 @@ if (canvas) {
 }
 
 /* =========================
-   04) GAME STATE
+   03) GAME STATE
    ========================= */
-let scanning = false;         // camera scanning loop active
-let awaitingAnswer = false;   // true after QR detected until answered
-let lastQR = "";              // "betul" or "salah"
+let scanning = false;         // camera loop active
+let awaitingAnswer = false;   // true when QR shown and waiting for player's answer
+let lastQR = "";              // "betul" / "salah"
 let roundCount = 0;
 let score = 0;
 let timeRemaining = 0;
 let questionInterval = null;
-let pausedUntilNextQR = false; // true after correct answer; timer set but paused
-let qrDebounce = false;       // prevent duplicate immediate scans
+let pausedUntilNextQR = false; // after correct answer, countdown paused until next QR
+let qrDebounce = false;       // short debounce to avoid duplicate scans
 
 /* =========================
-   05) UI INIT & Event Hooks
+   04) UI INIT
+   - Attach event listeners once here
    ========================= */
 function initUI(){
-    // Start buttons — support both ids if present
+    // Start button(s)
     const startBtn = el("startBtn") || el("startScanBtn");
     if (startBtn) startBtn.addEventListener("click", startGame);
 
@@ -76,7 +88,7 @@ function initUI(){
     if (btnC) btnC.addEventListener("click", ()=> playerAnswer("betul"));
     if (btnW) btnW.addEventListener("click", ()=> playerAnswer("salah"));
 
-    // Keyboard: '1' or 'b' => betul, '2' or 's' => salah
+    // Keyboard mapping: '1' or 'b' -> betul, '2' or 's' -> salah
     window.addEventListener("keydown", (e) => {
         if (!awaitingAnswer) return;
         const k = e.key.toLowerCase();
@@ -84,15 +96,15 @@ function initUI(){
         if (k === "2" || k === "s") playerAnswer("salah");
     });
 
-    // Save name button in hall of fame screen (if present)
+    // Save name (Hall of Fame)
     const saveBtn = el("saveNameBtn");
     if (saveBtn) saveBtn.addEventListener("click", saveHallOfFame);
 
-    // Connect Arduino button optional (Web Serial)
+    // Connect Arduino/ESP32 (optional)
     const connectBtn = el("connectArduinoBtn");
     if (connectBtn) connectBtn.addEventListener("click", connectArduinoSerial);
 
-    // Fullscreen button
+    // Fullscreen / kiosk
     const fsBtn = el("fullscreenBtn");
     if (fsBtn) fsBtn.addEventListener("click", () => {
         const docEl = document.documentElement;
@@ -106,7 +118,7 @@ function initUI(){
         }
     });
 
-    // Set defaults
+    // default UI values
     setText("score", "0");
     setText("timer", String(ROUND_TIME));
     setText("rockName", "–");
@@ -114,13 +126,11 @@ function initUI(){
 }
 
 /* =========================
-   06) START GAME (triggered by Start button)
-   - reset internal counters
-   - start camera and scanning
-   - roundCount remains 0 until first correct answer
+   05) START GAME (user clicks Start)
+   - Reset state and start camera scanning
    ========================= */
 function startGame(){
-    // reset
+    // reset values
     roundCount = 0;
     score = 0;
     timeRemaining = ROUND_TIME;
@@ -128,27 +138,27 @@ function startGame(){
     pausedUntilNextQR = false;
     qrDebounce = false;
 
-    setText("score","0");
+    setText("score", "0");
     setText("timer", String(ROUND_TIME));
-    setText("rockName","–");
-    setTextAll("finalScore","0");
+    setText("rockName", "–");
+    setTextAll("finalScore", "0");
 
-    // hide modals if any
+    // hide modals if present
     const endModal = el("endModal");
     if (endModal) endModal.style.display = "none";
     const hofScreen = el("hallOfFameScreen");
     if (hofScreen) hofScreen.style.display = "none";
 
-    // start camera & scanning
+    // start camera and scanning
     startCamera();
 }
 
 /* =========================
-   07) CAMERA START/STOP & SCAN LOOP (uses jsQR)
+   06) CAMERA & SCAN LOOP (jsQR)
    ========================= */
 async function startCamera(){
     if (!video || !canvas || !ctx) {
-        console.error("Missing video/canvas/context - cannot start camera.");
+        console.error("Missing video/canvas/ctx — cannot start camera.");
         if (el("cameraStatus")) el("cameraStatus").textContent = "Elemen kamera tidak lengkap.";
         return;
     }
@@ -164,8 +174,8 @@ async function startCamera(){
         const overlay = el("scannerOverlay");
         if (overlay) overlay.style.display = "block";
         requestAnimationFrame(scanLoop);
-    } catch (e) {
-        console.error("Camera error:", e);
+    } catch (err) {
+        console.error("Camera error:", err);
         if (el("cameraStatus")) el("cameraStatus").textContent = "Gagal buka kamera.";
     }
 }
@@ -186,7 +196,6 @@ function scanLoop(){
     if (!scanning) return;
 
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        // resize canvas to video
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
 
@@ -195,15 +204,14 @@ function scanLoop(){
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const code = (typeof jsQR !== "undefined") ? jsQR(imageData.data, canvas.width, canvas.height) : null;
 
-            // Only accept scans if we are not awaiting an answer and not debounced
+            // Accept scans only if no active question and not debounced
             if (code && !awaitingAnswer && !qrDebounce) {
-                // Debounce immediate re-scans for a short period
                 qrDebounce = true;
                 setTimeout(()=> qrDebounce = false, 1200);
                 processScannedQR(code.data);
             }
-        } catch(e){
-            // ignore frame read errors occasionally
+        } catch(e) {
+            // occasional frame read errors can be ignored
         }
     }
 
@@ -211,9 +219,9 @@ function scanLoop(){
 }
 
 /* =========================
-   08) PROCESS SCANNED QR
-   - Expecting payload "betul" or "salah"
-   - Set awaitingAnswer, start question timer
+   07) PROCESS SCANNED QR
+   - Expect "betul" or "salah"
+   - Start per-question timer
    ========================= */
 function processScannedQR(payload){
     if (!payload) return;
@@ -226,27 +234,25 @@ function processScannedQR(payload){
 
     lastQR = txt;
     awaitingAnswer = true;
-    // reset question timer
     timeRemaining = ROUND_TIME;
     pausedUntilNextQR = false;
     setText("timer", String(timeRemaining));
     startQuestionTimer();
 
-    // show prompt
     setText("rockName", "MULA MENJAWAB");
     if (el("cameraStatus")) el("cameraStatus").textContent = "Sila jawab sekarang!";
 }
 
 /* =========================
-   09) QUESTION TIMER
-   - counts down only if not pausedUntilNextQR
-   - if reaches 0 -> timeup -> end game
+   08) QUESTION TIMER
+   - counts down when not paused
+   - timeup -> endGame
    ========================= */
 function startQuestionTimer(){
     stopQuestionTimer();
     setText("timer", String(timeRemaining));
     questionInterval = setInterval(()=> {
-        if (pausedUntilNextQR) return; // don't decrement while paused between rounds
+        if (pausedUntilNextQR) return;
         timeRemaining--;
         setText("timer", String(timeRemaining));
         if (timeRemaining <= 0) {
@@ -265,16 +271,14 @@ function stopQuestionTimer(){
 }
 
 /* =========================
-   10) PLAYER ANSWER HANDLING
-   - Compare answer ("betul"/"salah") with lastQR
-   - Correct: award points, set NEXT_ROUND_TIME and pause countdown until next QR
-   - Wrong: play wrong -> end game
+   09) PLAYER ANSWER (compare with lastQR)
+   - correct: award points based on remaining time, set NEXT_ROUND_TIME and pause until next QR
+   - wrong: play wrong sound and end game
    ========================= */
 function playerAnswer(answer){
-    if (!awaitingAnswer) return; // nothing to answer
+    if (!awaitingAnswer) return;
 
     const a = String(answer).trim().toLowerCase();
-    // Safety: if lastQR empty treat as wrong (shouldn't happen)
     if (!lastQR) {
         safePlay(soundWrong);
         endGame();
@@ -282,38 +286,34 @@ function playerAnswer(answer){
     }
 
     if (a === lastQR) {
-        // Correct
+        // correct
         safePlay(soundCorrect);
 
-        // Score based on timeRemaining: map to 1..MAX_POINTS
-        // Use proportion of timeRemaining over ROUND_TIME
+        // compute earned points (proportional)
         let raw = Math.ceil((timeRemaining / ROUND_TIME) * MAX_POINTS);
         let earned = Math.max(MIN_POINTS, Math.min(MAX_POINTS, raw));
         score += earned;
         setText("score", String(score));
 
-        // progress round
         roundCount++;
         awaitingAnswer = false;
         stopQuestionTimer();
 
-        // set NEXT_ROUND_TIME but pause countdown until next QR scanned
+        // set pause until next QR and show NEXT_ROUND_TIME
         timeRemaining = NEXT_ROUND_TIME;
         setText("timer", String(timeRemaining));
         pausedUntilNextQR = true;
 
-        // clear prompt after short delay for UX
         setTimeout(()=> {
             setText("rockName", "–");
             lastQR = "";
         }, 500);
 
-        // if finished required rounds -> end after short delay
         if (roundCount >= TOTAL_ROUNDS) {
             setTimeout(()=> endGame(), 600);
         }
     } else {
-        // Wrong answer -> immediate end
+        // wrong -> immediate end
         safePlay(soundWrong);
         awaitingAnswer = false;
         stopQuestionTimer();
@@ -322,7 +322,7 @@ function playerAnswer(answer){
 }
 
 /* =========================
-   11) END GAME & RESET
+   10) END GAME & RESET
    ========================= */
 function endGame(){
     stopQuestionTimer();
@@ -330,43 +330,36 @@ function endGame(){
     awaitingAnswer = false;
     scanning = false;
 
-    // display final score(s)
     setTextAll("finalScore", String(score));
 
-    // show end modal
     const endModal = el("endModal");
     if (endModal) endModal.style.display = "block";
 
-    // show hall of fame input screen if exists
     const hofScreen = el("hallOfFameScreen");
     if (hofScreen) hofScreen.style.display = "block";
 }
 
 function resetGame(){
-    // hide modals/screens
     const endModal = el("endModal"); if (endModal) endModal.style.display = "none";
     const hofScreen = el("hallOfFameScreen"); if (hofScreen) hofScreen.style.display = "none";
 
-    // reset state
     roundCount = 0;
     score = 0;
     lastQR = "";
     awaitingAnswer = false;
     timeRemaining = ROUND_TIME;
     pausedUntilNextQR = false;
+
     setText("score","0");
     setText("timer", String(ROUND_TIME));
     setText("rockName","–");
     setTextAll("finalScore","0");
 
-    // restart camera scanning
     startCamera();
 }
 
 /* =========================
-   12) HALL OF FAME STORAGE (top 10)
-   - saveHallOfFame() takes playerName input and saves {name, score, ts, time}
-   - loadHallOfFame() renders into #hofList (if present)
+   11) HALL OF FAME (localStorage - top 10)
    ========================= */
 function saveHallOfFame(){
     let nameInput = document.querySelector("#hallOfFameScreen #playerName") ||
@@ -377,7 +370,6 @@ function saveHallOfFame(){
         alert("Field nama tidak ditemui.");
         return;
     }
-
     const name = (nameInput.value || "").trim();
     if (!name) { alert("Sila isi nama."); return; }
 
@@ -399,7 +391,7 @@ function saveHallOfFame(){
     localStorage.setItem("hof", JSON.stringify(hof));
 
     loadHallOfFame();
-    // hide hall of fame input after save
+
     const hofScreen = el("hallOfFameScreen"); if (hofScreen) hofScreen.style.display = "none";
     const endModal = el("endModal"); if (endModal) endModal.style.display = "none";
 }
@@ -419,9 +411,7 @@ function loadHallOfFame(){
 }
 
 /* =========================
-   13) ARDUINO / ESP32 via Web Serial (optional)
-   - Reads lines from serial; expects lines containing 'betul' or 'salah'
-   - User must click Connect Arduino button to request port
+   12) ARDUINO via Web Serial (optional)
    ========================= */
 let serialPort = null;
 let serialReader = null;
@@ -433,9 +423,9 @@ async function connectArduinoSerial(){
     try {
         serialPort = await navigator.serial.requestPort();
         await serialPort.open({ baudRate: 115200 });
-        const textDecoder = new TextDecoderStream();
-        serialPort.readable.pipeTo(textDecoder.writable);
-        serialReader = textDecoder.readable.getReader();
+        const decoder = new TextDecoderStream();
+        serialPort.readable.pipeTo(decoder.writable);
+        serialReader = decoder.readable.getReader();
 
         (async ()=> {
             while (true) {
@@ -445,7 +435,6 @@ async function connectArduinoSerial(){
                 value.split(/\r?\n/).forEach(line => {
                     const t = line.trim().toLowerCase();
                     if (t === "betul" || t === "salah") {
-                        // emulate player answering physically
                         playerAnswer(t);
                     }
                 });
@@ -458,46 +447,25 @@ async function connectArduinoSerial(){
 }
 
 /* =========================
-   14) INIT (DOMContentLoaded)
-   - Wire event handlers, render HOF, but DO NOT auto-start camera
+   13) INIT (DOMContentLoaded)
+   - Call initUI() and load Hall of Fame
+   - DO NOT auto-start camera here (start only via Start button)
    ========================= */
 document.addEventListener("DOMContentLoaded", ()=> {
     initUI();
     loadHallOfFame();
 
-    // warn if jsQR missing
     if (typeof jsQR === "undefined") {
         console.warn("jsQR library not found — QR scanning disabled.");
         if (el("cameraStatus")) el("cameraStatus").textContent = "jsQR tidak ditemui.";
     }
-
-    // Hook Start button(s) defensively
-    const startBtn = el("startBtn") || el("startScanBtn");
-    if (startBtn) startBtn.addEventListener("click", ()=> {
-        // ensure initial reset
-        roundCount = 0;
-        score = 0;
-        setText("score","0");
-        startCamera();
-    });
 });
+
 /* =========================
-   15) SAFE AUDIO PLAY WRAPPER
-   - Elakkan crash jika audio tak dapat dimainkan
-   ========================= */
-function safePlay(audioObj) {
-    if (!audioObj || typeof audioObj.play !== "function") return;
-    try {
-        audioObj.currentTime = 0;
-        audioObj.play().catch(()=>{});
-    } catch (e) {}
-}
-/* =========================
-   15) NOTES FOR FUTURE EDITS
-   - To change scoring formula: edit playerAnswer where 'raw' and 'earned' computed.
-   - To accept other QR payload formats (filename/category), modify processScannedQR()
-   - To change per-round pause behaviour, edit pausedUntilNextQR handling
-   - To change keys for keyboard: edit initUI keydown mapping
+   14) NOTES FOR FUTURE EDITS
+   - Scoring: edit computed 'earned' inside playerAnswer()
+   - Payload mapping: edit processScannedQR() if QR content changes (e.g., filenames)
+   - To change keys: edit initUI() keyboard mapping
    ========================= */
 
 /* End of file */
