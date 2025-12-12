@@ -254,7 +254,36 @@ h1 {
     box-shadow: 0 0 12px rgba(80,255,120,0.55);
     transform: scale(1.03);
 }
+.hof-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
+.hof-rank-icon {
+    font-size: 1.6rem;
+    width: 32px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.hof-details {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.hof-details .name {
+    font-weight: bold;
+    font-size: 1rem;
+    color: #eaffea;
+}
+
+.hof-details .score {
+    font-size: 0.85rem;
+    opacity: 0.85;
+    color: #d4ffd4;
+}
 
 /* ============================================================
    8) FLASH FEEDBACK (Betul / Salah)
