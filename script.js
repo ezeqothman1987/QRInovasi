@@ -183,27 +183,80 @@ function endGame() {
 }
 
 /* ============================================================
-   HALL OF FAME
-============================================================ */
+   HALL OF FAME (versi lengkap)
+   ============================================================ */
+
 function saveHallOfFame() {
-    const nameEl = document.getElementById("playerName");
-    const name = (nameEl && nameEl.value) ? nameEl.value : "Tanpa Nama";
+    const name = document.getElementById("playerName").value.trim();
+    if (!name) return;
 
-    const entry = {
-        name: name,
-        score: score,
-        date: new Date().toLocaleString()
-    };
+    let hof = JSON.parse(localStorage.getItem("hof") || "[]");
 
-    let list = JSON.parse(localStorage.getItem("hallOfFame") || "[]");
+    // Format tarikh & masa cantik
+    const now = new Date();
+    const timestamp =
+        now.toLocaleDateString("ms-MY", {
+            year: "numeric",
+            month: "short",
+            day: "numeric"
+        }) +
+        " " +
+        now.toLocaleTimeString("ms-MY", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
+        });
 
-    list.push(entry);
+    // Rekod baru
+    hof.push({
+        name,
+        score,
+        time: timestamp,
+        ms: now.getTime() // digunakan untuk sorting jika score sama
+    });
 
-    list.sort((a, b) => b.score - a.score);
+    // Susun:
+    // 1) Markah paling tinggi
+    // 2) Kalau markah sama → masa paling awal (lebih pantas)
+    hof.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return a.ms - b.ms; // siapa jawab cepat → atas
+    });
 
-    localStorage.setItem("hallOfFame", JSON.stringify(list));
+    // Hadkan kepada 10 rekod
+    hof = hof.slice(0, 10);
 
-    document.getElementById("hallOfFameScreen").style.display = "none";
+    // Simpan semula
+    localStorage.setItem("hof", JSON.stringify(hof));
+
+    loadHallOfFame();
+    resetGame();
 }
+
+
+
+function loadHallOfFame() {
+    const list = document.getElementById("hofList");
+    list.innerHTML = "";
+
+    let hof = JSON.parse(localStorage.getItem("hof") || "[]");
+
+    hof.forEach((entry, index) => {
+        const li = document.createElement("li");
+        li.className = "hof-item";
+
+        // Ikon untuk Top 3
+        let medal = "";
+        if (index === 0) medal = "🥇 ";
+        if (index === 1) medal = "🥈 ";
+        if (index === 2) medal = "🥉 ";
+
+        li.textContent = `${medal}${entry.name} – ${entry.score} pts ( ${entry.time} )`;
+
+        list.appendChild(li);
+    });
+}
+
 
 document.getElementById("saveNameBtn").addEventListener("click", saveHallOfFame);
