@@ -7,10 +7,13 @@
 -------------------------------------------- */
 const QR_PATH = "static/qr_images/";
 
-// Bunyi (belum aktif – akan aktif bila fail ada)
+// Bunyi (belum aktif – akan aktif bila fail ada dan buang const bawah)
 //const soundCorrect = new Audio("static/sound/correct.mp3");
 //const soundWrong   = new Audio("static/sound/wrong.mp3");
 //const soundTimeUp  = new Audio("static/sound/timeup.mp3");
+const soundCorrect = { play: ()=>{} };
+const soundWrong   = { play: ()=>{} };
+const soundTimeUp  = { play: ()=>{} };
 
 // Untuk elak baca QR sama 2 kali
 let lastQR = "";
