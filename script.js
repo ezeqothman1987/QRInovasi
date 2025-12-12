@@ -223,9 +223,9 @@ function scanLoop(){
                 qrDebounce = true;
                 setTimeout(()=> qrDebounce = false, 1200);
 
-                // enable cooldown so new scans are ignored for 3s
+                // enable cooldown so new scans are ignored for 5s
                 isCooldown = true;
-                setTimeout(()=> { isCooldown = false; }, 3000);
+                setTimeout(()=> { isCooldown = false; }, 5000);
 
                 processScannedQR(code.data);
             }
