@@ -424,13 +424,13 @@ function loadHallOfFame() {
 
     let hof = JSON.parse(localStorage.getItem("hof") || "[]");
 
-    // Susun ikut markah (desc), masa (asc)
+    // Susun ikut markah → kemudian ikut timestamp (bukan string time)
     hof.sort((a, b) => {
-        if (b.score === a.score) return a.time - b.time;
+        if (b.score === a.score) return a.ts - b.ts;
         return b.score - a.score;
     });
 
-    // Hadkan ke 10 terbaik
+    // Hadkan ke top 10
     hof = hof.slice(0, 10);
 
     hof.forEach((item, index) => {
@@ -442,17 +442,26 @@ function loadHallOfFame() {
         const li = document.createElement("li");
         li.className = "hof-item";
 
+        // Format tarikh
+        let dt = new Date(item.ts);
+        let formatted =
+            dt.toLocaleDateString("ms-MY") +
+            " " +
+            dt.toLocaleTimeString("ms-MY");
+
         li.innerHTML = `
             <div class="hof-rank-icon">${icon}</div>
             <div class="hof-details">
                 <span class="name">${item.name}</span>
-                <span class="score">Markah: ${item.score} | Masa: ${item.time}s</span>
+                <span class="score">Markah: ${item.score}</span>
+                <span class="time">📅 ${formatted}</span>
             </div>
         `;
 
         hofList.appendChild(li);
     });
 }
+
 
 /* ============================================================
    11) Web Serial (Arduino / ESP32) – OPTIONAL
